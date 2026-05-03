@@ -50,6 +50,9 @@ import androidx.compose.material3.OutlinedButton
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.LaunchedEffect
 
 enum class DiveSortOption(
     val label: String
@@ -66,9 +69,19 @@ enum class DiveSortOption(
 @Composable
 fun DiveListScreen(
     dives: List<Dive>,
+    snackbarMessage: String?,
+    onSnackbarShown: () -> Unit,
     onAddDiveClick: () -> Unit,
     onDiveClick: (Int) -> Unit
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(snackbarMessage) {
+        if (!snackbarMessage.isNullOrBlank()) {
+            snackbarHostState.showSnackbar(snackbarMessage)
+            onSnackbarShown()
+        }
+    }
     var searchText by remember { mutableStateOf("") }
     var expandedSortMenu by remember { mutableStateOf(false) }
     var selectedSortOption by remember { mutableStateOf(DiveSortOption.NEWEST) }
@@ -117,6 +130,9 @@ fun DiveListScreen(
                     }
                 }
             )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
         },
         floatingActionButton = {
             FloatingActionButton(
