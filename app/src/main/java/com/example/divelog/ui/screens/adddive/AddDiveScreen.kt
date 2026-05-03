@@ -107,11 +107,18 @@ fun AddDiveScreen(
         SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
     }
 
+    val depthNumber = depth.toDoubleOrNull()
+    val durationNumber = duration.toIntOrNull()
+
+    val isDepthValid = depthNumber != null && depthNumber in 0.0..100.0
+    val isDurationValid = durationNumber != null && durationNumber > 0
+    val isDateValid = date.isNotBlank()
+
     val isFormValid = title.isNotBlank() &&
             location.isNotBlank() &&
-            date.isNotBlank() &&
-            depth.isNotBlank() &&
-            duration.isNotBlank()
+            isDateValid &&
+            isDepthValid &&
+            isDurationValid
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = PickMultipleVisualMedia(maxItems = 5),
@@ -292,7 +299,7 @@ fun AddDiveScreen(
                             },
                         singleLine = true,
                         readOnly = true,
-                        isError = showError && date.isBlank(),
+                        isError = showError && !isDateValid,
                         trailingIcon = {
                             IconButton(
                                 onClick = {
@@ -309,12 +316,14 @@ fun AddDiveScreen(
 
                     OutlinedTextField(
                         value = depth,
-                        onValueChange = { depth = it },
+                        onValueChange = { value ->
+                            depth = value.filter { it.isDigit() || it == '.' }
+                        },
                         label = { Text("Profundidad máxima *") },
                         placeholder = { Text("Ej: 28") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        isError = showError && depth.isBlank(),
+                        isError = showError && !isDepthValid,
                         suffix = { Text("m") },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Decimal
@@ -323,12 +332,14 @@ fun AddDiveScreen(
 
                     OutlinedTextField(
                         value = duration,
-                        onValueChange = { duration = it },
+                        onValueChange = { value ->
+                            duration = value.filter { it.isDigit() }
+                        },
                         label = { Text("Duración *") },
                         placeholder = { Text("Ej: 45") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        isError = showError && duration.isBlank(),
+                        isError = showError && !isDurationValid,
                         suffix = { Text("min") },
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Number
@@ -452,11 +463,29 @@ fun AddDiveScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             if (showError && !isFormValid) {
-                Text(
-                    text = "Completa los campos obligatorios marcados con *.",
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium
-                )
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    if (title.isBlank()) {
+                        Text("El título es obligatorio.", color = MaterialTheme.colorScheme.error)
+                    }
+
+                    if (location.isBlank()) {
+                        Text("El lugar es obligatorio.", color = MaterialTheme.colorScheme.error)
+                    }
+
+                    if (!isDateValid) {
+                        Text("Selecciona una fecha válida.", color = MaterialTheme.colorScheme.error)
+                    }
+
+                    if (!isDepthValid) {
+                        Text("La profundidad debe estar entre 0 y 100 metros.", color = MaterialTheme.colorScheme.error)
+                    }
+
+                    if (!isDurationValid) {
+                        Text("La duración debe ser mayor que 0 minutos.", color = MaterialTheme.colorScheme.error)
+                    }
+                }
             }
 
             Button(
