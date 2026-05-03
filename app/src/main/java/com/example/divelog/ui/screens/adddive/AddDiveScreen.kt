@@ -57,6 +57,9 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.DropdownMenuItem
 import com.example.divelog.data.model.Dive
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -217,200 +220,207 @@ fun AddDiveScreen(
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
             )
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+            AnimatedVisibility(
+                visible = true,
+                enter = fadeIn() + slideInVertically(
+                    initialOffsetY = { it / 4 }
+                )
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
                 ) {
-                    OutlinedTextField(
-                        value = title,
-                        onValueChange = { title = it },
-                        label = { Text("Título *") },
-                        placeholder = { Text("Ej: Inmersión en Cabo de Palos") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        isError = showError && title.isBlank()
-                    )
-
-                    OutlinedTextField(
-                        value = location,
-                        onValueChange = { location = it },
-                        label = { Text("Lugar *") },
-                        placeholder = { Text("Ej: Murcia, España") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        isError = showError && location.isBlank()
-                    )
-
-                    ExposedDropdownMenuBox(
-                        expanded = diveTypeExpanded,
-                        onExpandedChange = {
-                            diveTypeExpanded = !diveTypeExpanded
-                        }
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         OutlinedTextField(
-                            value = diveType,
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Tipo de inmersión") },
-                            placeholder = { Text("Selecciona un tipo") },
-                            modifier = Modifier
-                                .menuAnchor()
-                                .fillMaxWidth(),
-                            trailingIcon = {
-                                ExposedDropdownMenuDefaults.TrailingIcon(
-                                    expanded = diveTypeExpanded
-                                )
-                            }
+                            value = title,
+                            onValueChange = { title = it },
+                            label = { Text("Título *") },
+                            placeholder = { Text("Ej: Inmersión en Cabo de Palos") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            isError = showError && title.isBlank()
                         )
 
-                        ExposedDropdownMenu(
+                        OutlinedTextField(
+                            value = location,
+                            onValueChange = { location = it },
+                            label = { Text("Lugar *") },
+                            placeholder = { Text("Ej: Murcia, España") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            isError = showError && location.isBlank()
+                        )
+
+                        ExposedDropdownMenuBox(
                             expanded = diveTypeExpanded,
-                            onDismissRequest = {
-                                diveTypeExpanded = false
+                            onExpandedChange = {
+                                diveTypeExpanded = !diveTypeExpanded
                             }
                         ) {
-                            diveTypes.forEach { type ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(type)
-                                    },
-                                    onClick = {
-                                        diveType = type
-                                        diveTypeExpanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
+                            OutlinedTextField(
+                                value = diveType,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Tipo de inmersión") },
+                                placeholder = { Text("Selecciona un tipo") },
+                                modifier = Modifier
+                                    .menuAnchor()
+                                    .fillMaxWidth(),
+                                trailingIcon = {
+                                    ExposedDropdownMenuDefaults.TrailingIcon(
+                                        expanded = diveTypeExpanded
+                                    )
+                                }
+                            )
 
-                    OutlinedTextField(
-                        value = date,
-                        onValueChange = {},
-                        label = { Text("Fecha *") },
-                        placeholder = { Text("Selecciona una fecha") },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                showDatePicker = true
-                            },
-                        singleLine = true,
-                        readOnly = true,
-                        isError = showError && !isDateValid,
-                        trailingIcon = {
-                            IconButton(
-                                onClick = {
-                                    showDatePicker = true
+                            ExposedDropdownMenu(
+                                expanded = diveTypeExpanded,
+                                onDismissRequest = {
+                                    diveTypeExpanded = false
                                 }
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.CalendarMonth,
-                                    contentDescription = "Seleccionar fecha"
-                                )
+                                diveTypes.forEach { type ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(type)
+                                        },
+                                        onClick = {
+                                            diveType = type
+                                            diveTypeExpanded = false
+                                        }
+                                    )
+                                }
                             }
                         }
-                    )
 
-                    OutlinedTextField(
-                        value = depth,
-                        onValueChange = { value ->
-                            depth = value.filter { it.isDigit() || it == '.' }
-                        },
-                        label = { Text("Profundidad máxima *") },
-                        placeholder = { Text("Ej: 28") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        isError = showError && !isDepthValid,
-                        suffix = { Text("m") },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Decimal
-                        )
-                    )
-
-                    OutlinedTextField(
-                        value = duration,
-                        onValueChange = { value ->
-                            duration = value.filter { it.isDigit() }
-                        },
-                        label = { Text("Duración *") },
-                        placeholder = { Text("Ej: 45") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        isError = showError && !isDurationValid,
-                        suffix = { Text("min") },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Number
-                        )
-                    )
-
-                    OutlinedTextField(
-                        value = temperature,
-                        onValueChange = { temperature = it },
-                        label = { Text("Temperatura del agua") },
-                        placeholder = { Text("Ej: 21") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        suffix = { Text("ºC") },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Decimal
-                        )
-                    )
-
-                    ExposedDropdownMenuBox(
-                        expanded = visibilityExpanded,
-                        onExpandedChange = {
-                            visibilityExpanded = !visibilityExpanded
-                        }
-                    ) {
                         OutlinedTextField(
-                            value = visibility,
+                            value = date,
                             onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Visibilidad") },
-                            placeholder = { Text("Selecciona la visibilidad") },
+                            label = { Text("Fecha *") },
+                            placeholder = { Text("Selecciona una fecha") },
                             modifier = Modifier
-                                .menuAnchor()
-                                .fillMaxWidth(),
+                                .fillMaxWidth()
+                                .clickable {
+                                    showDatePicker = true
+                                },
+                            singleLine = true,
+                            readOnly = true,
+                            isError = showError && !isDateValid,
                             trailingIcon = {
-                                ExposedDropdownMenuDefaults.TrailingIcon(
-                                    expanded = visibilityExpanded
-                                )
+                                IconButton(
+                                    onClick = {
+                                        showDatePicker = true
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.CalendarMonth,
+                                        contentDescription = "Seleccionar fecha"
+                                    )
+                                }
                             }
                         )
 
-                        ExposedDropdownMenu(
+                        OutlinedTextField(
+                            value = depth,
+                            onValueChange = { value ->
+                                depth = value.filter { it.isDigit() || it == '.' }
+                            },
+                            label = { Text("Profundidad máxima *") },
+                            placeholder = { Text("Ej: 28") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            isError = showError && !isDepthValid,
+                            suffix = { Text("m") },
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Decimal
+                            )
+                        )
+
+                        OutlinedTextField(
+                            value = duration,
+                            onValueChange = { value ->
+                                duration = value.filter { it.isDigit() }
+                            },
+                            label = { Text("Duración *") },
+                            placeholder = { Text("Ej: 45") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            isError = showError && !isDurationValid,
+                            suffix = { Text("min") },
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Number
+                            )
+                        )
+
+                        OutlinedTextField(
+                            value = temperature,
+                            onValueChange = { temperature = it },
+                            label = { Text("Temperatura del agua") },
+                            placeholder = { Text("Ej: 21") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            suffix = { Text("ºC") },
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Decimal
+                            )
+                        )
+
+                        ExposedDropdownMenuBox(
                             expanded = visibilityExpanded,
-                            onDismissRequest = {
-                                visibilityExpanded = false
+                            onExpandedChange = {
+                                visibilityExpanded = !visibilityExpanded
                             }
                         ) {
-                            visibilityOptions.forEach { option ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(option)
-                                    },
-                                    onClick = {
-                                        visibility = option
-                                        visibilityExpanded = false
-                                    }
-                                )
+                            OutlinedTextField(
+                                value = visibility,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Visibilidad") },
+                                placeholder = { Text("Selecciona la visibilidad") },
+                                modifier = Modifier
+                                    .menuAnchor()
+                                    .fillMaxWidth(),
+                                trailingIcon = {
+                                    ExposedDropdownMenuDefaults.TrailingIcon(
+                                        expanded = visibilityExpanded
+                                    )
+                                }
+                            )
+
+                            ExposedDropdownMenu(
+                                expanded = visibilityExpanded,
+                                onDismissRequest = {
+                                    visibilityExpanded = false
+                                }
+                            ) {
+                                visibilityOptions.forEach { option ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(option)
+                                        },
+                                        onClick = {
+                                            visibility = option
+                                            visibilityExpanded = false
+                                        }
+                                    )
+                                }
                             }
                         }
-                    }
 
-                    OutlinedTextField(
-                        value = notes,
-                        onValueChange = { notes = it },
-                        label = { Text("Notas") },
-                        placeholder = { Text("Escribe aquí tus recuerdos, fauna vista, sensaciones...") },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(140.dp),
-                        maxLines = 6
-                    )
+                        OutlinedTextField(
+                            value = notes,
+                            onValueChange = { notes = it },
+                            label = { Text("Notas") },
+                            placeholder = { Text("Escribe aquí tus recuerdos, fauna vista, sensaciones...") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(140.dp),
+                            maxLines = 6
+                        )
+                    }
                 }
             }
 
