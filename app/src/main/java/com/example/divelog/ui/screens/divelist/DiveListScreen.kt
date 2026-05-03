@@ -61,6 +61,12 @@ import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.rememberAsyncImagePainter
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 
 enum class DiveSortOption(
     val label: String
@@ -251,13 +257,26 @@ fun DiveListScreen(
                         )
                     }
                 } else {
-                    items(sortedDives) { dive ->
-                        DiveCard(
-                            dive = dive,
-                            onClick = {
-                                onDiveClick(dive.id)
-                            }
-                        )
+                    items(
+                        items = sortedDives,
+                        key = { dive -> dive.id }
+                    ) { dive ->
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = fadeIn() + slideInVertically(
+                                initialOffsetY = { it / 2 }
+                            ),
+                            exit = fadeOut() + slideOutVertically(
+                                targetOffsetY = { -it / 2 }
+                            )
+                        ) {
+                            DiveCard(
+                                dive = dive,
+                                onClick = {
+                                    onDiveClick(dive.id)
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -272,7 +291,9 @@ fun DiveCard(
 ) {
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(),
         shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
     ) {

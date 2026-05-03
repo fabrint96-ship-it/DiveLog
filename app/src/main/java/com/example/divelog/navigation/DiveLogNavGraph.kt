@@ -21,6 +21,10 @@ import android.net.Uri
 import com.example.divelog.data.local.ImageStorageHelper
 import androidx.compose.ui.platform.LocalContext
 import com.example.divelog.ui.screens.photoviewer.PhotoViewerScreen
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 
 @Composable
 fun DiveLogNavGraph() {
