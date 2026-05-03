@@ -64,6 +64,10 @@ fun DiveLogNavGraph() {
                         )
                     )
 
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("snackbar_message", "Inmersión guardada")
+
                     navController.popBackStack()
                 },
                 onBackClick = {
@@ -73,8 +77,18 @@ fun DiveLogNavGraph() {
         }
 
         composable(Routes.DIVE_LIST) {
+            val snackbarMessage = navController.currentBackStackEntry
+                ?.savedStateHandle
+                ?.get<String>("snackbar_message")
+
             DiveListScreen(
                 dives = dives,
+                snackbarMessage = snackbarMessage,
+                onSnackbarShown = {
+                    navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.remove<String>("snackbar_message")
+                },
                 onAddDiveClick = {
                     navController.navigate(Routes.ADD_DIVE)
                 },
@@ -110,6 +124,10 @@ fun DiveLogNavGraph() {
                             )
                         )
                     }
+
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("snackbar_message", "Inmersión actualizada")
 
                     navController.popBackStack()
                 },
