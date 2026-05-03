@@ -43,6 +43,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,6 +55,7 @@ fun DiveDetailScreen(
     onBackClick: () -> Unit,
     onDrawingClick: () -> Unit,
     onEditClick: (Int) -> Unit,
+    onPhotoClick: (String) -> Unit,
     onDeleteClick: (Dive) -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -167,7 +172,13 @@ fun DiveDetailScreen(
                                     Image(
                                         painter = rememberAsyncImagePainter(photo),
                                         contentDescription = "Foto de la inmersión",
-                                        modifier = Modifier.size(110.dp)
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .size(110.dp)
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .clickable {
+                                                onPhotoClick(photo)
+                                            }
                                     )
                                 }
                             }
