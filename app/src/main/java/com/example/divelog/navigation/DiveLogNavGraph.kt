@@ -20,6 +20,11 @@ import com.example.divelog.viewmodel.DiveViewModelFactory
 import android.net.Uri
 import com.example.divelog.data.local.ImageStorageHelper
 import androidx.compose.ui.platform.LocalContext
+import com.example.divelog.ui.screens.photoviewer.PhotoViewerScreen
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 
 @Composable
 fun DiveLogNavGraph() {
@@ -38,6 +43,19 @@ fun DiveLogNavGraph() {
         navController = navController,
         startDestination = Routes.DIVE_LIST
     ) {
+        composable(Routes.PHOTO_VIEWER) { backStackEntry ->
+            val photoUri = backStackEntry.arguments
+                ?.getString("photoUri")
+                ?: ""
+
+            PhotoViewerScreen(
+                photoUri = photoUri,
+                onBackClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
         composable(Routes.ADD_DIVE) {
             AddDiveScreen(
                 diveToEdit = null,
@@ -154,6 +172,11 @@ fun DiveLogNavGraph() {
                 },
                 onEditClick = { diveId ->
                     navController.navigate(Routes.editDive(diveId))
+                },
+                onPhotoClick = { photo ->
+                    navController.navigate(
+                        Routes.photoViewer(Uri.encode(photo))
+                    )
                 },
                 onDeleteClick = { dive ->
                     diveViewModel.deleteDive(dive)
