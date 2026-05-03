@@ -38,21 +38,11 @@ fun DiveLogNavGraph() {
         navController = navController,
         startDestination = Routes.DIVE_LIST
     ) {
-        composable(Routes.DIVE_LIST) {
-            DiveListScreen(
-                dives = dives,
-                onAddDiveClick = {
-                    navController.navigate(Routes.ADD_DIVE)
-                },
-                onDiveClick = { diveId ->
-                    navController.navigate(Routes.diveDetail(diveId))
-                }
-            )
-        }
-
         composable(Routes.ADD_DIVE) {
             AddDiveScreen(
-                onSaveDive = { title, location, diveType, date, depth, duration, temperature, visibility, notes, photos ->
+                diveToEdit = null,
+                onSaveDive = { id, title, location, diveType, date, depth, duration, temperature, visibility, notes, photos ->
+
                     val savedPhotos = ImageStorageHelper.saveImagesToInternalStorage(
                         context = context,
                         uris = photos.map { Uri.parse(it) }
@@ -82,6 +72,53 @@ fun DiveLogNavGraph() {
             )
         }
 
+        composable(Routes.DIVE_LIST) {
+            DiveListScreen(
+                dives = dives,
+                onAddDiveClick = {
+                    navController.navigate(Routes.ADD_DIVE)
+                },
+                onDiveClick = { diveId ->
+                    navController.navigate(Routes.diveDetail(diveId))
+                }
+            )
+        }
+
+        composable(Routes.EDIT_DIVE) { backStackEntry ->
+            val diveId = backStackEntry.arguments
+                ?.getString("diveId")
+                ?.toIntOrNull()
+
+            val selectedDive = dives.find { it.id == diveId }
+
+            AddDiveScreen(
+                diveToEdit = selectedDive,
+                onSaveDive = { id, title, location, diveType, date, depth, duration, temperature, visibility, notes, photos ->
+
+                    if (selectedDive != null) {
+                        diveViewModel.updateDive(
+                            selectedDive.copy(
+                                title = title,
+                                location = location,
+                                diveType = diveType,
+                                date = date,
+                                maxDepth = depth,
+                                duration = duration,
+                                waterTemperature = temperature,
+                                visibility = visibility,
+                                notes = notes
+                            )
+                        )
+                    }
+
+                    navController.popBackStack()
+                },
+                onBackClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
         composable(Routes.DIVE_DETAIL) { backStackEntry ->
             val diveId = backStackEntry.arguments
                 ?.getString("diveId")
@@ -96,6 +133,9 @@ fun DiveLogNavGraph() {
                 },
                 onDrawingClick = {
                     navController.navigate(Routes.DRAWING)
+                },
+                onEditClick = { diveId ->
+                    navController.navigate(Routes.editDive(diveId))
                 },
                 onDeleteClick = { dive ->
                     diveViewModel.deleteDive(dive)

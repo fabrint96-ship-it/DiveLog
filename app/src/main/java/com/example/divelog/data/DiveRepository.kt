@@ -16,4 +16,8 @@ class DiveRepository(
     suspend fun deleteDive(dive: Dive) {
         diveDao.deleteDive(dive)
     }
+
+    suspend fun updateDive(dive: Dive) {
+        diveDao.updateDive(dive)
+    }
 }

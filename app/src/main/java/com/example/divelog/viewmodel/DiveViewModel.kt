@@ -29,4 +29,10 @@ class DiveViewModel(
             repository.deleteDive(dive)
         }
     }
+
+    fun updateDive(dive: Dive) {
+        viewModelScope.launch {
+            repository.updateDive(dive)
+        }
+    }
 }

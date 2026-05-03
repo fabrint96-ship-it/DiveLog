@@ -1,4 +1,5 @@
 package com.example.divelog.data.local
+import androidx.room.Update
 
 import androidx.room.Dao
 import androidx.room.Insert
@@ -18,4 +19,7 @@ interface DiveDao {
 
     @Delete
     suspend fun deleteDive(dive: Dive)
+
+    @Update
+    suspend fun updateDive(dive: Dive)
 }

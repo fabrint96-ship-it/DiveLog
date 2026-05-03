@@ -42,6 +42,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.Edit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,6 +50,7 @@ fun DiveDetailScreen(
     dive: Dive?,
     onBackClick: () -> Unit,
     onDrawingClick: () -> Unit,
+    onEditClick: (Int) -> Unit,
     onDeleteClick: (Dive) -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -191,6 +193,23 @@ fun DiveDetailScreen(
                     Spacer(modifier = Modifier.padding(4.dp))
 
                     Text("Abrir dibujos")
+                }
+
+                Button(
+                    onClick = {
+                        onEditClick(dive.id)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(14.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Editar"
+                    )
+
+                    Spacer(modifier = Modifier.padding(4.dp))
+
+                    Text("Editar inmersión")
                 }
 
                 OutlinedButton(
