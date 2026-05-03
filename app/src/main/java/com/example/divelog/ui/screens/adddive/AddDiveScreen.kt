@@ -56,11 +56,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.DropdownMenuItem
+import com.example.divelog.data.model.Dive
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddDiveScreen(
+    diveToEdit: Dive? = null,
     onSaveDive: (
+        id: Int,
         title: String,
         location: String,
         diveType: String,
@@ -74,14 +77,18 @@ fun AddDiveScreen(
     ) -> Unit,
     onBackClick: () -> Unit
 ) {
-    var title by remember { mutableStateOf("") }
-    var location by remember { mutableStateOf("") }
-    var date by remember { mutableStateOf("") }
-    var depth by remember { mutableStateOf("") }
-    var duration by remember { mutableStateOf("") }
-    var temperature by remember { mutableStateOf("") }
-    var visibility by remember { mutableStateOf("") }
+    var title by remember { mutableStateOf(diveToEdit?.title ?: "") }
+    var location by remember { mutableStateOf(diveToEdit?.location ?: "") }
+    var diveType by remember { mutableStateOf(diveToEdit?.diveType ?: "") }
+    var date by remember { mutableStateOf(diveToEdit?.date ?: "") }
+    var depth by remember { mutableStateOf(diveToEdit?.maxDepth?.replace(" m", "") ?: "") }
+    var duration by remember { mutableStateOf(diveToEdit?.duration?.replace(" min", "") ?: "") }
+    var temperature by remember { mutableStateOf(diveToEdit?.waterTemperature?.replace(" ºC", "") ?: "") }
+    var visibility by remember { mutableStateOf(diveToEdit?.visibility ?: "") }
     var visibilityExpanded by remember { mutableStateOf(false) }
+    var notes by remember { mutableStateOf(diveToEdit?.notes ?: "") }
+    var selectedPhotos by remember { mutableStateOf<List<Uri>>(emptyList()) }
+
 
     val visibilityOptions = listOf(
         "Excelente / +20 m",
@@ -90,8 +97,7 @@ fun AddDiveScreen(
         "Baja / 2-5 m",
         "Muy baja / <2 m"
     )
-    var notes by remember { mutableStateOf("") }
-    var selectedPhotos by remember { mutableStateOf<List<Uri>>(emptyList()) }
+
     var showError by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
 
@@ -114,7 +120,6 @@ fun AddDiveScreen(
         }
     )
 
-    var diveType by remember { mutableStateOf("") }
     var diveTypeExpanded by remember { mutableStateOf(false) }
 
     val diveTypes = listOf(
@@ -458,6 +463,7 @@ fun AddDiveScreen(
                 onClick = {
                     if (isFormValid) {
                         onSaveDive(
+                            diveToEdit?.id ?: 0,
                             title,
                             location,
                             diveType,
