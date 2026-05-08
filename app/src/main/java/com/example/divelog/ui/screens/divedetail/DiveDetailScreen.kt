@@ -48,6 +48,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.animation.animateContentSize
+import com.example.divelog.data.model.GalleryItem
+import com.example.divelog.data.model.GalleryItemType
+import androidx.compose.material3.AssistChip
+import androidx.compose.foundation.layout.Box
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -92,6 +96,18 @@ fun DiveDetailScreen(
                 Text("No se ha encontrado la inmersión.")
             }
         } else {
+            val galleryItems = dive.photos.map {
+                GalleryItem(
+                    uri = it,
+                    type = GalleryItemType.PHOTO
+                )
+            } + dive.drawings.map {
+                GalleryItem(
+                    uri = it,
+                    type = GalleryItemType.DRAWING
+                )
+            }
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -160,73 +176,48 @@ fun DiveDetailScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = "Fotos",
+                            text = "Galería",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
 
-                        if (dive.photos.isNotEmpty()) {
+                        if (galleryItems.isNotEmpty()) {
                             LazyRow(
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                items(dive.photos) { photo ->
-                                    Image(
-                                        painter = rememberAsyncImagePainter(photo),
-                                        contentDescription = "Foto de la inmersión",
-                                        contentScale = ContentScale.Crop,
-                                        modifier = Modifier
-                                            .size(110.dp)
-                                            .clip(RoundedCornerShape(16.dp))
-                                            .clickable {
-                                                onPhotoClick(photo)
-                                            }
-                                    )
+                                items(galleryItems) { item ->
+                                    Box {
+                                        Image(
+                                            painter = rememberAsyncImagePainter(item.uri),
+                                            contentDescription = "Elemento de galería",
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier
+                                                .size(110.dp)
+                                                .clip(RoundedCornerShape(16.dp))
+                                                .clickable {
+                                                    onPhotoClick(item.uri)
+                                                }
+                                        )
+
+                                        AssistChip(
+                                            onClick = {},
+                                            label = {
+                                                Text(
+                                                    text = if (item.type == GalleryItemType.PHOTO) {
+                                                        "Foto"
+                                                    } else {
+                                                        "Dibujo"
+                                                    }
+                                                )
+                                            },
+                                            modifier = Modifier.padding(6.dp)
+                                        )
+                                    }
                                 }
                             }
                         } else {
                             Text(
-                                text = "No hay fotos añadidas.",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                    }
-                }
-
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text(
-                            text = "Dibujos",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        if (dive.drawings.isNotEmpty()) {
-                            LazyRow(
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                items(dive.drawings) { drawing ->
-                                    Image(
-                                        painter = rememberAsyncImagePainter(drawing),
-                                        contentDescription = "Dibujo de la inmersión",
-                                        contentScale = ContentScale.Crop,
-                                        modifier = Modifier
-                                            .size(110.dp)
-                                            .clip(RoundedCornerShape(16.dp))
-                                            .clickable {
-                                                onPhotoClick(drawing)
-                                            }
-                                    )
-                                }
-                            }
-                        } else {
-                            Text(
-                                text = "No hay dibujos guardados.",
+                                text = "No hay fotos ni dibujos guardados.",
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }
