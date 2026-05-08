@@ -25,6 +25,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import com.example.divelog.data.local.DrawingStorageHelper
 
 @Composable
 fun DiveLogNavGraph() {
@@ -168,7 +169,9 @@ fun DiveLogNavGraph() {
                     navController.popBackStack()
                 },
                 onDrawingClick = {
-                    navController.navigate(Routes.DRAWING)
+                    selectedDive?.let { dive ->
+                        navController.navigate(Routes.drawing(dive.id))
+                    }
                 },
                 onEditClick = { diveId ->
                     navController.navigate(Routes.editDive(diveId))
@@ -185,9 +188,35 @@ fun DiveLogNavGraph() {
             )
         }
 
-        composable(Routes.DRAWING) {
+        composable(Routes.DRAWING) { backStackEntry ->
+            val diveId = backStackEntry.arguments
+                ?.getString("diveId")
+                ?.toIntOrNull()
+
+            val selectedDive = dives.find { it.id == diveId }
+
             DrawingScreen(
                 onBackClick = {
+                    navController.popBackStack()
+                },
+                onSaveDrawing = { bitmap ->
+                    val savedDrawing = DrawingStorageHelper.saveDrawingToInternalStorage(
+                        context = context,
+                        bitmap = bitmap
+                    )
+
+                    if (savedDrawing != null && selectedDive != null) {
+                        diveViewModel.updateDive(
+                            selectedDive.copy(
+                                drawings = selectedDive.drawings + savedDrawing
+                            )
+                        )
+                    }
+
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("snackbar_message", "Dibujo guardado")
+
                     navController.popBackStack()
                 }
             )

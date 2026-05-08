@@ -192,6 +192,47 @@ fun DiveDetailScreen(
                     }
                 }
 
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = "Dibujos",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        if (dive.drawings.isNotEmpty()) {
+                            LazyRow(
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                items(dive.drawings) { drawing ->
+                                    Image(
+                                        painter = rememberAsyncImagePainter(drawing),
+                                        contentDescription = "Dibujo de la inmersión",
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .size(110.dp)
+                                            .clip(RoundedCornerShape(16.dp))
+                                            .clickable {
+                                                onPhotoClick(drawing)
+                                            }
+                                    )
+                                }
+                            }
+                        } else {
+                            Text(
+                                text = "No hay dibujos guardados.",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                }
+
                 Button(
                     onClick = onDrawingClick,
                     modifier = Modifier.fillMaxWidth(),
