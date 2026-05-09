@@ -52,6 +52,10 @@ import com.example.divelog.data.model.GalleryItem
 import com.example.divelog.data.model.GalleryItemType
 import androidx.compose.material3.AssistChip
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.background
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,9 +65,11 @@ fun DiveDetailScreen(
     onDrawingClick: () -> Unit,
     onEditClick: (Int) -> Unit,
     onPhotoClick: (String) -> Unit,
+    onDeleteGalleryItem: (GalleryItem) -> Unit,
     onDeleteClick: (Dive) -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var galleryItemToDelete by remember { mutableStateOf<GalleryItem?>(null) }
 
     Scaffold(
         topBar = {
@@ -210,8 +216,29 @@ fun DiveDetailScreen(
                                                     }
                                                 )
                                             },
-                                            modifier = Modifier.padding(6.dp)
+                                            modifier = Modifier
+                                                .align(Alignment.BottomStart)
+                                                .padding(6.dp)
                                         )
+
+                                        IconButton(
+                                            onClick = {
+                                                galleryItemToDelete = item
+                                            },
+                                            modifier = Modifier
+                                                .align(Alignment.TopEnd)
+                                                .padding(2.dp)
+                                                .background(
+                                                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+                                                    shape = RoundedCornerShape(50)
+                                                )
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Delete,
+                                                contentDescription = "Eliminar elemento",
+                                                tint = MaterialTheme.colorScheme.error
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -307,6 +334,76 @@ fun DiveDetailScreen(
                         }
                     )
                 }
+
+                if (galleryItemToDelete != null) {
+                    AlertDialog(
+                        onDismissRequest = {
+                            galleryItemToDelete = null
+                        },
+                        title = {
+                            Text("Eliminar elemento")
+                        },
+                        text = {
+                            Text("¿Seguro que quieres eliminar este elemento de la galería?")
+                        },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    galleryItemToDelete?.let { item ->
+                                        onDeleteGalleryItem(item)
+                                    }
+                                    galleryItemToDelete = null
+                                }
+                            ) {
+                                Text("Eliminar")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(
+                                onClick = {
+                                    galleryItemToDelete = null
+                                }
+                            ) {
+                                Text("Cancelar")
+                            }
+                        }
+                    )
+                }
+            }
+
+            if (galleryItemToDelete != null) {
+                AlertDialog(
+                    onDismissRequest = {
+                        galleryItemToDelete = null
+                    },
+                    title = {
+                        Text("Eliminar elemento")
+                    },
+                    text = {
+                        Text("¿Seguro que quieres eliminar este elemento de la galería?")
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                galleryItemToDelete?.let { item ->
+                                    onDeleteGalleryItem(item)
+                                }
+                                galleryItemToDelete = null
+                            }
+                        ) {
+                            Text("Eliminar")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            onClick = {
+                                galleryItemToDelete = null
+                            }
+                        ) {
+                            Text("Cancelar")
+                        }
+                    }
+                )
             }
         }
     }
