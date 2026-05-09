@@ -26,6 +26,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import com.example.divelog.data.local.DrawingStorageHelper
+import com.example.divelog.data.model.GalleryItemType
+import com.example.divelog.data.local.FileStorageHelper
 
 @Composable
 fun DiveLogNavGraph() {
@@ -180,6 +182,23 @@ fun DiveLogNavGraph() {
                     navController.navigate(
                         Routes.photoViewer(Uri.encode(photo))
                     )
+                },
+                onDeleteGalleryItem = { item ->
+                    selectedDive?.let { dive ->
+                        val updatedDive = when (item.type) {
+                            GalleryItemType.PHOTO -> dive.copy(
+                                photos = dive.photos.filterNot { it == item.uri }
+                            )
+
+                            GalleryItemType.DRAWING -> dive.copy(
+                                drawings = dive.drawings.filterNot { it == item.uri }
+                            )
+                        }
+
+                        diveViewModel.updateDive(updatedDive)
+
+                        FileStorageHelper.deleteFile(item.uri)
+                    }
                 },
                 onDeleteClick = { dive ->
                     diveViewModel.deleteDive(dive)
