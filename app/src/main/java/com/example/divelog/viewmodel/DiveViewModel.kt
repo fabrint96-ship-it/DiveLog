@@ -11,6 +11,10 @@ import com.example.divelog.domain.usecase.AddDiveUseCase
 import com.example.divelog.domain.usecase.DeleteDiveUseCase
 import com.example.divelog.domain.usecase.GetDivesUseCase
 import com.example.divelog.domain.usecase.UpdateDiveUseCase
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 
 class DiveViewModel(
     private val getDivesUseCase: GetDivesUseCase,
@@ -19,11 +23,39 @@ class DiveViewModel(
     private val deleteDiveUseCase: DeleteDiveUseCase
 ) : ViewModel() {
 
-    val dives = getDivesUseCase().stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = emptyList()
-    )
+    private val _isLoading = MutableStateFlow(true)
+    private val _errorMessage = MutableStateFlow<String?>(null)
+
+    val uiState: StateFlow<DiveUiState> = combine(
+        getDivesUseCase(),
+        _isLoading,
+        _errorMessage
+    ) { dives, isLoading, errorMessage ->
+        DiveUiState(
+            isLoading = isLoading,
+            dives = dives,
+            errorMessage = errorMessage
+        )
+    }
+        .catch { exception ->
+            emit(
+                DiveUiState(
+                    isLoading = false,
+                    errorMessage = exception.message ?: "Error desconocido"
+                )
+            )
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = DiveUiState(isLoading = true)
+        )
+
+    init {
+        viewModelScope.launch {
+            _isLoading.value = false
+        }
+    }
 
     fun addDive(dive: Dive) {
         viewModelScope.launch {
