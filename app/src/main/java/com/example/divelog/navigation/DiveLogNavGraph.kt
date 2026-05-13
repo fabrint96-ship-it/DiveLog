@@ -28,6 +28,8 @@ import androidx.compose.animation.togetherWith
 import com.example.divelog.data.local.DrawingStorageHelper
 import com.example.divelog.data.model.GalleryItemType
 import com.example.divelog.data.local.FileStorageHelper
+import androidx.compose.ui.platform.LocalContext
+import com.example.divelog.data.local.ShareHelper
 
 @Composable
 fun DiveLogNavGraph() {
@@ -199,6 +201,12 @@ fun DiveLogNavGraph() {
 
                         FileStorageHelper.deleteFile(item.uri)
                     }
+                },
+                onShareClick = { dive ->
+                    ShareHelper.shareDive(
+                        context = context,
+                        dive = dive
+                    )
                 },
                 onDeleteClick = { dive ->
                     diveViewModel.deleteDive(dive)
