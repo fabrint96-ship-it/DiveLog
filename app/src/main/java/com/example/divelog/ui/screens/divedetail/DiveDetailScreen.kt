@@ -56,6 +56,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.IconButton
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.background
+import androidx.compose.material.icons.filled.Share
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,6 +67,7 @@ fun DiveDetailScreen(
     onEditClick: (Int) -> Unit,
     onPhotoClick: (String) -> Unit,
     onDeleteGalleryItem: (GalleryItem) -> Unit,
+    onShareClick: (Dive) -> Unit,
     onDeleteClick: (Dive) -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -281,6 +283,23 @@ fun DiveDetailScreen(
                     Spacer(modifier = Modifier.padding(4.dp))
 
                     Text("Editar inmersión")
+                }
+
+                Button(
+                    onClick = {
+                        onShareClick(dive)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(14.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = "Compartir"
+                    )
+
+                    Spacer(modifier = Modifier.padding(4.dp))
+
+                    Text("Compartir inmersión")
                 }
 
                 OutlinedButton(
