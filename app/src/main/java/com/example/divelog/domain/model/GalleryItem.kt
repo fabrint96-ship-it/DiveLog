@@ -1,4 +1,4 @@
-package com.example.divelog.data.model
+package com.example.divelog.domain.model
 
 data class GalleryItem(
     val uri: String,

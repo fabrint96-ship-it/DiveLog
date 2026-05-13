@@ -1,4 +1,4 @@
-package com.example.divelog.data.model
+package com.example.divelog.domain.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

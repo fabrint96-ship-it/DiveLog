@@ -4,7 +4,7 @@ import androidx.room.Update
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import com.example.divelog.data.model.Dive
+import com.example.divelog.domain.model.Dive
 import kotlinx.coroutines.flow.Flow
 import androidx.room.Delete
 

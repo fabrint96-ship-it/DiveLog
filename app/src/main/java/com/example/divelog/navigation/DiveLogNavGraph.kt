@@ -12,23 +12,17 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.example.divelog.viewmodel.DiveViewModel
-import com.example.divelog.data.model.Dive
+import com.example.divelog.domain.model.Dive
 import androidx.compose.ui.platform.LocalContext
 import com.example.divelog.data.DiveRepository
 import com.example.divelog.data.local.DiveDatabase
 import com.example.divelog.viewmodel.DiveViewModelFactory
 import android.net.Uri
 import com.example.divelog.data.local.ImageStorageHelper
-import androidx.compose.ui.platform.LocalContext
 import com.example.divelog.ui.screens.photoviewer.PhotoViewerScreen
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import com.example.divelog.data.local.DrawingStorageHelper
-import com.example.divelog.data.model.GalleryItemType
+import com.example.divelog.domain.model.GalleryItemType
 import com.example.divelog.data.local.FileStorageHelper
-import androidx.compose.ui.platform.LocalContext
 import com.example.divelog.data.local.ShareHelper
 
 @Composable
