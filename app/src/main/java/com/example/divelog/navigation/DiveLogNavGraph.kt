@@ -36,7 +36,8 @@ fun DiveLogNavGraph() {
     val diveViewModel: DiveViewModel = viewModel(
         factory = DiveViewModelFactory(repository)
     )
-    val dives by diveViewModel.dives.collectAsState()
+    val uiState by diveViewModel.uiState.collectAsState()
+    val dives = uiState.dives
 
     NavHost(
         navController = navController,
@@ -100,6 +101,8 @@ fun DiveLogNavGraph() {
 
             DiveListScreen(
                 dives = dives,
+                isLoading = uiState.isLoading,
+                errorMessage = uiState.errorMessage,
                 snackbarMessage = snackbarMessage,
                 onSnackbarShown = {
                     navController.currentBackStackEntry

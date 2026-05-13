@@ -67,6 +67,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedButton
 
 enum class DiveSortOption(
     val label: String
@@ -83,6 +85,8 @@ enum class DiveSortOption(
 @Composable
 fun DiveListScreen(
     dives: List<Dive>,
+    isLoading: Boolean,
+    errorMessage: String?,
     snackbarMessage: String?,
     onSnackbarShown: () -> Unit,
     onAddDiveClick: () -> Unit,
@@ -166,116 +170,165 @@ fun DiveListScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
         ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                item {
-                    Text(
-                        text = "Mis inmersiones",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Text(
-                        text = "Registra tus aventuras bajo el agua.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    OutlinedTextField(
-                        value = searchText,
-                        onValueChange = { searchText = it },
-                        label = { Text("Buscar inmersión") },
-                        placeholder = { Text("Título, lugar o fecha") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = "Buscar"
-                            )
-                        },
-
-                        trailingIcon = {
-                            if (searchText.isNotEmpty()) {
-                                IconButton(onClick = { searchText = "" }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = "Limpiar búsqueda"
-                                    )
-                                }
-                            }
-                        }
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
+            when {
+                isLoading -> {
                     Box(
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        OutlinedButton(
-                            onClick = {
-                                expandedSortMenu = true
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Ordenar: ${selectedSortOption.label}")
-                        }
+                        CircularProgressIndicator()
+                    }
+                }
 
-                        DropdownMenu(
-                            expanded = expandedSortMenu,
-                            onDismissRequest = {
-                                expandedSortMenu = false
-                            }
+                errorMessage != null -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Card(
+                            modifier = Modifier.padding(24.dp),
+                            shape = RoundedCornerShape(24.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
                         ) {
-                            DiveSortOption.entries.forEach { option ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(option.label)
-                                    },
-                                    onClick = {
-                                        selectedSortOption = option
-                                        expandedSortMenu = false
-                                    }
+                            Column(
+                                modifier = Modifier.padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Text(
+                                    text = "Ha ocurrido un error",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold
                                 )
+
+                                Text(
+                                    text = errorMessage,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+
+                                OutlinedButton(
+                                    onClick = onAddDiveClick
+                                ) {
+                                    Text("Volver a intentar")
+                                }
                             }
                         }
                     }
                 }
 
-                if (sortedDives.isEmpty()) {
-                    item {
-                        EmptyDiveList(
-                            onAddDiveClick = onAddDiveClick
-                        )
-                    }
-                } else {
-                    items(
-                        items = sortedDives,
-                        key = { dive -> dive.id }
-                    ) { dive ->
-                        AnimatedVisibility(
-                            visible = true,
-                            enter = fadeIn() + slideInVertically(
-                                initialOffsetY = { it / 2 }
-                            ),
-                            exit = fadeOut() + slideOutVertically(
-                                targetOffsetY = { -it / 2 }
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        item {
+                            Text(
+                                text = "Mis inmersiones",
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Bold
                             )
-                        ) {
-                            DiveCard(
-                                dive = dive,
-                                onClick = {
-                                    onDiveClick(dive.id)
+
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            Text(
+                                text = "Registra tus aventuras bajo el agua.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                            )
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            OutlinedTextField(
+                                value = searchText,
+                                onValueChange = { searchText = it },
+                                label = { Text("Buscar inmersión") },
+                                placeholder = { Text("Título, lugar o fecha") },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Search,
+                                        contentDescription = "Buscar"
+                                    )
+                                },
+
+                                trailingIcon = {
+                                    if (searchText.isNotEmpty()) {
+                                        IconButton(onClick = { searchText = "" }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Close,
+                                                contentDescription = "Limpiar búsqueda"
+                                            )
+                                        }
+                                    }
                                 }
                             )
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Box(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                OutlinedButton(
+                                    onClick = {
+                                        expandedSortMenu = true
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Ordenar: ${selectedSortOption.label}")
+                                }
+
+                                DropdownMenu(
+                                    expanded = expandedSortMenu,
+                                    onDismissRequest = {
+                                        expandedSortMenu = false
+                                    }
+                                ) {
+                                    DiveSortOption.entries.forEach { option ->
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(option.label)
+                                            },
+                                            onClick = {
+                                                selectedSortOption = option
+                                                expandedSortMenu = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        if (sortedDives.isEmpty()) {
+                            item {
+                                EmptyDiveList(
+                                    onAddDiveClick = onAddDiveClick
+                                )
+                            }
+                        } else {
+                            items(
+                                items = sortedDives,
+                                key = { dive -> dive.id }
+                            ) { dive ->
+                                AnimatedVisibility(
+                                    visible = true,
+                                    enter = fadeIn() + slideInVertically(
+                                        initialOffsetY = { it / 2 }
+                                    ),
+                                    exit = fadeOut() + slideOutVertically(
+                                        targetOffsetY = { -it / 2 }
+                                    )
+                                ) {
+                                    DiveCard(
+                                        dive = dive,
+                                        onClick = {
+                                            onDiveClick(dive.id)
+                                        }
+                                    )
+                                }
+                            }
                         }
                     }
                 }
