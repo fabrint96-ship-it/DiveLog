@@ -48,6 +48,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.animation.animateContentSize
+import com.example.divelog.data.model.GalleryItem
+import com.example.divelog.data.model.GalleryItemType
+import androidx.compose.material3.AssistChip
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.background
+import androidx.compose.material.icons.filled.Share
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,9 +66,12 @@ fun DiveDetailScreen(
     onDrawingClick: () -> Unit,
     onEditClick: (Int) -> Unit,
     onPhotoClick: (String) -> Unit,
+    onDeleteGalleryItem: (GalleryItem) -> Unit,
+    onShareClick: (Dive) -> Unit,
     onDeleteClick: (Dive) -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var galleryItemToDelete by remember { mutableStateOf<GalleryItem?>(null) }
 
     Scaffold(
         topBar = {
@@ -92,6 +104,18 @@ fun DiveDetailScreen(
                 Text("No se ha encontrado la inmersión.")
             }
         } else {
+            val galleryItems = dive.photos.map {
+                GalleryItem(
+                    uri = it,
+                    type = GalleryItemType.PHOTO
+                )
+            } + dive.drawings.map {
+                GalleryItem(
+                    uri = it,
+                    type = GalleryItemType.DRAWING
+                )
+            }
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -160,32 +184,69 @@ fun DiveDetailScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = "Fotos",
+                            text = "Galería",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
 
-                        if (dive.photos.isNotEmpty()) {
+                        if (galleryItems.isNotEmpty()) {
                             LazyRow(
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                items(dive.photos) { photo ->
-                                    Image(
-                                        painter = rememberAsyncImagePainter(photo),
-                                        contentDescription = "Foto de la inmersión",
-                                        contentScale = ContentScale.Crop,
-                                        modifier = Modifier
-                                            .size(110.dp)
-                                            .clip(RoundedCornerShape(16.dp))
-                                            .clickable {
-                                                onPhotoClick(photo)
-                                            }
-                                    )
+                                items(galleryItems) { item ->
+                                    Box {
+                                        Image(
+                                            painter = rememberAsyncImagePainter(item.uri),
+                                            contentDescription = "Elemento de galería",
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier
+                                                .size(110.dp)
+                                                .clip(RoundedCornerShape(16.dp))
+                                                .clickable {
+                                                    onPhotoClick(item.uri)
+                                                }
+                                        )
+
+                                        AssistChip(
+                                            onClick = {},
+                                            label = {
+                                                Text(
+                                                    text = if (item.type == GalleryItemType.PHOTO) {
+                                                        "Foto"
+                                                    } else {
+                                                        "Dibujo"
+                                                    }
+                                                )
+                                            },
+                                            modifier = Modifier
+                                                .align(Alignment.BottomStart)
+                                                .padding(6.dp)
+                                        )
+
+                                        IconButton(
+                                            onClick = {
+                                                galleryItemToDelete = item
+                                            },
+                                            modifier = Modifier
+                                                .align(Alignment.TopEnd)
+                                                .padding(2.dp)
+                                                .background(
+                                                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
+                                                    shape = RoundedCornerShape(50)
+                                                )
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Delete,
+                                                contentDescription = "Eliminar elemento",
+                                                tint = MaterialTheme.colorScheme.error
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         } else {
                             Text(
-                                text = "No hay fotos añadidas.",
+                                text = "No hay fotos ni dibujos guardados.",
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }
@@ -222,6 +283,23 @@ fun DiveDetailScreen(
                     Spacer(modifier = Modifier.padding(4.dp))
 
                     Text("Editar inmersión")
+                }
+
+                Button(
+                    onClick = {
+                        onShareClick(dive)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(14.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = "Compartir"
+                    )
+
+                    Spacer(modifier = Modifier.padding(4.dp))
+
+                    Text("Compartir inmersión")
                 }
 
                 OutlinedButton(
@@ -275,6 +353,76 @@ fun DiveDetailScreen(
                         }
                     )
                 }
+
+                if (galleryItemToDelete != null) {
+                    AlertDialog(
+                        onDismissRequest = {
+                            galleryItemToDelete = null
+                        },
+                        title = {
+                            Text("Eliminar elemento")
+                        },
+                        text = {
+                            Text("¿Seguro que quieres eliminar este elemento de la galería?")
+                        },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    galleryItemToDelete?.let { item ->
+                                        onDeleteGalleryItem(item)
+                                    }
+                                    galleryItemToDelete = null
+                                }
+                            ) {
+                                Text("Eliminar")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(
+                                onClick = {
+                                    galleryItemToDelete = null
+                                }
+                            ) {
+                                Text("Cancelar")
+                            }
+                        }
+                    )
+                }
+            }
+
+            if (galleryItemToDelete != null) {
+                AlertDialog(
+                    onDismissRequest = {
+                        galleryItemToDelete = null
+                    },
+                    title = {
+                        Text("Eliminar elemento")
+                    },
+                    text = {
+                        Text("¿Seguro que quieres eliminar este elemento de la galería?")
+                    },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                galleryItemToDelete?.let { item ->
+                                    onDeleteGalleryItem(item)
+                                }
+                                galleryItemToDelete = null
+                            }
+                        ) {
+                            Text("Eliminar")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            onClick = {
+                                galleryItemToDelete = null
+                            }
+                        ) {
+                            Text("Cancelar")
+                        }
+                    }
+                )
             }
         }
     }

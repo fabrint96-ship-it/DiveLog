@@ -25,6 +25,11 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import com.example.divelog.data.local.DrawingStorageHelper
+import com.example.divelog.data.model.GalleryItemType
+import com.example.divelog.data.local.FileStorageHelper
+import androidx.compose.ui.platform.LocalContext
+import com.example.divelog.data.local.ShareHelper
 
 @Composable
 fun DiveLogNavGraph() {
@@ -168,7 +173,9 @@ fun DiveLogNavGraph() {
                     navController.popBackStack()
                 },
                 onDrawingClick = {
-                    navController.navigate(Routes.DRAWING)
+                    selectedDive?.let { dive ->
+                        navController.navigate(Routes.drawing(dive.id))
+                    }
                 },
                 onEditClick = { diveId ->
                     navController.navigate(Routes.editDive(diveId))
@@ -178,6 +185,29 @@ fun DiveLogNavGraph() {
                         Routes.photoViewer(Uri.encode(photo))
                     )
                 },
+                onDeleteGalleryItem = { item ->
+                    selectedDive?.let { dive ->
+                        val updatedDive = when (item.type) {
+                            GalleryItemType.PHOTO -> dive.copy(
+                                photos = dive.photos.filterNot { it == item.uri }
+                            )
+
+                            GalleryItemType.DRAWING -> dive.copy(
+                                drawings = dive.drawings.filterNot { it == item.uri }
+                            )
+                        }
+
+                        diveViewModel.updateDive(updatedDive)
+
+                        FileStorageHelper.deleteFile(item.uri)
+                    }
+                },
+                onShareClick = { dive ->
+                    ShareHelper.shareDive(
+                        context = context,
+                        dive = dive
+                    )
+                },
                 onDeleteClick = { dive ->
                     diveViewModel.deleteDive(dive)
                     navController.popBackStack()
@@ -185,9 +215,35 @@ fun DiveLogNavGraph() {
             )
         }
 
-        composable(Routes.DRAWING) {
+        composable(Routes.DRAWING) { backStackEntry ->
+            val diveId = backStackEntry.arguments
+                ?.getString("diveId")
+                ?.toIntOrNull()
+
+            val selectedDive = dives.find { it.id == diveId }
+
             DrawingScreen(
                 onBackClick = {
+                    navController.popBackStack()
+                },
+                onSaveDrawing = { bitmap ->
+                    val savedDrawing = DrawingStorageHelper.saveDrawingToInternalStorage(
+                        context = context,
+                        bitmap = bitmap
+                    )
+
+                    if (savedDrawing != null && selectedDive != null) {
+                        diveViewModel.updateDive(
+                            selectedDive.copy(
+                                drawings = selectedDive.drawings + savedDrawing
+                            )
+                        )
+                    }
+
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("snackbar_message", "Dibujo guardado")
+
                     navController.popBackStack()
                 }
             )
