@@ -3,16 +3,23 @@ package com.example.divelog.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.divelog.data.DiveRepository
-import com.example.divelog.data.model.Dive
+import com.example.divelog.domain.model.Dive
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.example.divelog.domain.usecase.AddDiveUseCase
+import com.example.divelog.domain.usecase.DeleteDiveUseCase
+import com.example.divelog.domain.usecase.GetDivesUseCase
+import com.example.divelog.domain.usecase.UpdateDiveUseCase
 
 class DiveViewModel(
-    private val repository: DiveRepository
+    private val getDivesUseCase: GetDivesUseCase,
+    private val addDiveUseCase: AddDiveUseCase,
+    private val updateDiveUseCase: UpdateDiveUseCase,
+    private val deleteDiveUseCase: DeleteDiveUseCase
 ) : ViewModel() {
 
-    val dives = repository.dives.stateIn(
+    val dives = getDivesUseCase().stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = emptyList()
@@ -20,19 +27,19 @@ class DiveViewModel(
 
     fun addDive(dive: Dive) {
         viewModelScope.launch {
-            repository.insertDive(dive)
+            addDiveUseCase(dive)
         }
     }
 
     fun deleteDive(dive: Dive) {
         viewModelScope.launch {
-            repository.deleteDive(dive)
+            deleteDiveUseCase(dive)
         }
     }
 
     fun updateDive(dive: Dive) {
         viewModelScope.launch {
-            repository.updateDive(dive)
+            updateDiveUseCase(dive)
         }
     }
 }

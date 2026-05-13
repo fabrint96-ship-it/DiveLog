@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
-import com.example.divelog.data.model.Dive
+import com.example.divelog.domain.model.Dive
 
 @Database(
     entities = [Dive::class],
