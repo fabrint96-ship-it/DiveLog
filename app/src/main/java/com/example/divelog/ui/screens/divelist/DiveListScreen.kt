@@ -69,6 +69,8 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material3.IconButton
 
 enum class DiveSortOption(
     val label: String
@@ -90,7 +92,8 @@ fun DiveListScreen(
     snackbarMessage: String?,
     onSnackbarShown: () -> Unit,
     onAddDiveClick: () -> Unit,
-    onDiveClick: (Int) -> Unit
+    onDiveClick: (Int) -> Unit,
+    onLogoutClick: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -144,6 +147,14 @@ fun DiveListScreen(
                         Text(
                             text = "Bitácora de submarinismo",
                             style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onLogoutClick) {
+                        Icon(
+                            imageVector = Icons.Default.Logout,
+                            contentDescription = "Cerrar sesión"
                         )
                     }
                 }
