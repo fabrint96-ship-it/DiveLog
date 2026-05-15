@@ -24,10 +24,15 @@ import com.example.divelog.data.local.DrawingStorageHelper
 import com.example.divelog.domain.model.GalleryItemType
 import com.example.divelog.data.local.FileStorageHelper
 import com.example.divelog.data.local.ShareHelper
+import androidx.compose.runtime.LaunchedEffect
+import com.example.divelog.ui.screens.login.LoginScreen
+import com.example.divelog.viewmodel.AuthViewModel
 
 @Composable
 fun DiveLogNavGraph() {
     val navController = rememberNavController()
+    val authViewModel: AuthViewModel = viewModel()
+    val authUiState by authViewModel.uiState.collectAsState()
     val context = LocalContext.current
 
     val database = DiveDatabase.getDatabase(context)
@@ -39,9 +44,23 @@ fun DiveLogNavGraph() {
     val uiState by diveViewModel.uiState.collectAsState()
     val dives = uiState.dives
 
+    LaunchedEffect(authUiState.isLoggedIn) {
+        if (authUiState.isLoggedIn) {
+            navController.navigate(Routes.DIVE_LIST) {
+                popUpTo(Routes.LOGIN) {
+                    inclusive = true
+                }
+            }
+        }
+    }
+
     NavHost(
         navController = navController,
-        startDestination = Routes.DIVE_LIST
+        startDestination = if (authUiState.isLoggedIn) {
+            Routes.DIVE_LIST
+        } else {
+            Routes.LOGIN
+        }
     ) {
         composable(Routes.PHOTO_VIEWER) { backStackEntry ->
             val photoUri = backStackEntry.arguments
@@ -94,6 +113,18 @@ fun DiveLogNavGraph() {
             )
         }
 
+        composable(Routes.LOGIN) {
+            LoginScreen(
+                authUiState = authUiState,
+                onLoginClick = { email, password ->
+                    authViewModel.login(email, password)
+                },
+                onRegisterClick = { email, password ->
+                    authViewModel.register(email, password)
+                }
+            )
+        }
+
         composable(Routes.DIVE_LIST) {
             val snackbarMessage = navController.currentBackStackEntry
                 ?.savedStateHandle
@@ -114,6 +145,15 @@ fun DiveLogNavGraph() {
                 },
                 onDiveClick = { diveId ->
                     navController.navigate(Routes.diveDetail(diveId))
+                },
+                onLogoutClick = {
+                    authViewModel.logout()
+
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(Routes.DIVE_LIST) {
+                            inclusive = true
+                        }
+                    }
                 }
             )
         }
