@@ -71,6 +71,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.CloudDownload
 
 enum class DiveSortOption(
     val label: String
@@ -93,7 +95,9 @@ fun DiveListScreen(
     onSnackbarShown: () -> Unit,
     onAddDiveClick: () -> Unit,
     onDiveClick: (Int) -> Unit,
-    onLogoutClick: () -> Unit
+    onLogoutClick: () -> Unit,
+    onBackupClick: () -> Unit,
+    onRestoreClick: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -155,6 +159,20 @@ fun DiveListScreen(
                         Icon(
                             imageVector = Icons.Default.Logout,
                             contentDescription = "Cerrar sesión"
+                        )
+                    }
+
+                    IconButton(onClick = onBackupClick) {
+                        Icon(
+                            imageVector = Icons.Default.CloudUpload,
+                            contentDescription = "Backup en la nube"
+                        )
+                    }
+
+                    IconButton(onClick = onRestoreClick) {
+                        Icon(
+                            imageVector = Icons.Default.CloudDownload,
+                            contentDescription = "Restaurar desde la nube"
                         )
                     }
                 }

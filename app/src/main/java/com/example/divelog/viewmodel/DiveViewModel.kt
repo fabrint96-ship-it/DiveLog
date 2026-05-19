@@ -3,6 +3,7 @@ package com.example.divelog.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.divelog.data.DiveRepository
+import com.example.divelog.data.remote.CloudBackupRepository
 import com.example.divelog.domain.model.Dive
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
@@ -25,6 +26,7 @@ class DiveViewModel(
 
     private val _isLoading = MutableStateFlow(true)
     private val _errorMessage = MutableStateFlow<String?>(null)
+    private val cloudBackupRepository = CloudBackupRepository()
 
     val uiState: StateFlow<DiveUiState> = combine(
         getDivesUseCase(),
@@ -72,6 +74,46 @@ class DiveViewModel(
     fun updateDive(dive: Dive) {
         viewModelScope.launch {
             updateDiveUseCase(dive)
+        }
+    }
+
+    fun backupToCloud() {
+        viewModelScope.launch {
+            try {
+                val currentDives = uiState.value.dives
+
+                cloudBackupRepository.uploadDives(currentDives)
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun restoreFromCloud() {
+        viewModelScope.launch {
+            try {
+                val cloudDives = cloudBackupRepository.downloadDives()
+
+                val uniqueCloudDives = cloudDives
+                    .filter { it.syncId.isNotBlank() }
+                    .distinctBy { it.syncId }
+
+                val localDives = uiState.value.dives
+
+                localDives.forEach { dive ->
+                    deleteDiveUseCase(dive)
+                }
+
+                uniqueCloudDives.forEach { dive ->
+                    addDiveUseCase(
+                        dive.copy(id = 0)
+                    )
+                }
+
+            } catch (e: Exception) {
+                android.util.Log.e("SUPABASE_RESTORE", "Error restore", e)
+            }
         }
     }
 }

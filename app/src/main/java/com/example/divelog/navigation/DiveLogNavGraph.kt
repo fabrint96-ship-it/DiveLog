@@ -46,6 +46,8 @@ fun DiveLogNavGraph() {
 
     LaunchedEffect(authUiState.isLoggedIn) {
         if (authUiState.isLoggedIn) {
+            diveViewModel.restoreFromCloud()
+
             navController.navigate(Routes.DIVE_LIST) {
                 popUpTo(Routes.LOGIN) {
                     inclusive = true
@@ -147,6 +149,10 @@ fun DiveLogNavGraph() {
                     navController.navigate(Routes.diveDetail(diveId))
                 },
                 onLogoutClick = {
+                    uiState.dives.forEach { dive ->
+                        diveViewModel.deleteDive(dive)
+                    }
+
                     authViewModel.logout()
 
                     navController.navigate(Routes.LOGIN) {
@@ -154,6 +160,12 @@ fun DiveLogNavGraph() {
                             inclusive = true
                         }
                     }
+                },
+                onBackupClick = {
+                    diveViewModel.backupToCloud()
+                },
+                onRestoreClick = {
+                    diveViewModel.restoreFromCloud()
                 }
             )
         }
@@ -170,6 +182,20 @@ fun DiveLogNavGraph() {
                 onSaveDive = { id, title, location, diveType, date, depth, duration, temperature, visibility, notes, photos ->
 
                     if (selectedDive != null) {
+
+                        val existingPhotos = selectedDive.photos
+
+                        val newPhotos = photos.filterNot { photo ->
+                            existingPhotos.contains(photo)
+                        }
+
+                        val savedNewPhotos = ImageStorageHelper.saveImagesToInternalStorage(
+                            context = context,
+                            uris = newPhotos.map { Uri.parse(it) }
+                        )
+
+                        val finalPhotos = existingPhotos + savedNewPhotos
+
                         diveViewModel.updateDive(
                             selectedDive.copy(
                                 title = title,
@@ -180,7 +206,10 @@ fun DiveLogNavGraph() {
                                 duration = duration,
                                 waterTemperature = temperature,
                                 visibility = visibility,
-                                notes = notes
+                                notes = notes,
+                                photos = finalPhotos.distinct(),
+                                drawings = selectedDive.drawings,
+                                cloudId = selectedDive.cloudId
                             )
                         )
                     }

@@ -32,6 +32,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.divelog.viewmodel.AuthUiState
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.text.input.VisualTransformation
 
 @Composable
 fun LoginScreen(
@@ -41,6 +45,7 @@ fun LoginScreen(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
 
     Scaffold { paddingValues ->
         Column(
@@ -94,7 +99,27 @@ fun LoginScreen(
                         label = { Text("Contraseña") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        visualTransformation = PasswordVisualTransformation()
+                        visualTransformation = if (passwordVisible) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
+                        trailingIcon = {
+                            IconButton(
+                                onClick = {
+                                    passwordVisible = !passwordVisible
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = if (passwordVisible) {
+                                        Icons.Default.VisibilityOff
+                                    } else {
+                                        Icons.Default.Visibility
+                                    },
+                                    contentDescription = "Mostrar u ocultar contraseña"
+                                )
+                            }
+                        }
                     )
 
                     if (authUiState.errorMessage != null) {

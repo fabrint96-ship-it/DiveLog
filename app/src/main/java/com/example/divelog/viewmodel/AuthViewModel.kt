@@ -2,7 +2,7 @@ package com.example.divelog.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.divelog.data.AuthRepository
+import com.example.divelog.data.remote.SupabaseAuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -13,9 +13,9 @@ data class AuthUiState(
     val errorMessage: String? = null
 )
 
-class AuthViewModel(
-    private val authRepository: AuthRepository = AuthRepository()
-) : ViewModel() {
+class AuthViewModel : ViewModel() {
+
+    private val authRepository = SupabaseAuthRepository()
 
     private val _uiState = MutableStateFlow(
         AuthUiState(
@@ -58,7 +58,9 @@ class AuthViewModel(
     }
 
     fun logout() {
-        authRepository.logout()
-        _uiState.value = AuthUiState(isLoggedIn = false)
+        viewModelScope.launch {
+            authRepository.logout()
+            _uiState.value = AuthUiState(isLoggedIn = false)
+        }
     }
 }
