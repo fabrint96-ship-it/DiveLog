@@ -1,55 +1,69 @@
 package com.example.divelog.navigation
 
+import android.net.Uri
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.divelog.data.DiveRepository
+import com.example.divelog.data.local.DiveDatabase
+import com.example.divelog.data.local.DrawingStorageHelper
+import com.example.divelog.data.local.FileStorageHelper
+import com.example.divelog.data.local.ImageStorageHelper
+import com.example.divelog.data.local.ShareHelper
+import com.example.divelog.domain.model.Dive
+import com.example.divelog.domain.model.GalleryItemType
 import com.example.divelog.ui.screens.adddive.AddDiveScreen
 import com.example.divelog.ui.screens.divedetail.DiveDetailScreen
 import com.example.divelog.ui.screens.divelist.DiveListScreen
 import com.example.divelog.ui.screens.drawing.DrawingScreen
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import com.example.divelog.viewmodel.DiveViewModel
-import com.example.divelog.domain.model.Dive
-import androidx.compose.ui.platform.LocalContext
-import com.example.divelog.data.DiveRepository
-import com.example.divelog.data.local.DiveDatabase
-import com.example.divelog.viewmodel.DiveViewModelFactory
-import android.net.Uri
-import com.example.divelog.data.local.ImageStorageHelper
-import com.example.divelog.ui.screens.photoviewer.PhotoViewerScreen
-import com.example.divelog.data.local.DrawingStorageHelper
-import com.example.divelog.domain.model.GalleryItemType
-import com.example.divelog.data.local.FileStorageHelper
-import com.example.divelog.data.local.ShareHelper
-import androidx.compose.runtime.LaunchedEffect
 import com.example.divelog.ui.screens.login.LoginScreen
+import com.example.divelog.ui.screens.photoviewer.PhotoViewerScreen
 import com.example.divelog.viewmodel.AuthViewModel
+import com.example.divelog.viewmodel.DiveViewModel
+import com.example.divelog.viewmodel.DiveViewModelFactory
 
 @Composable
 fun DiveLogNavGraph() {
     val navController = rememberNavController()
-    val authViewModel: AuthViewModel = viewModel()
-    val authUiState by authViewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val database = DiveDatabase.getDatabase(context)
     val repository = DiveRepository(database.diveDao())
 
+    val authViewModel: AuthViewModel = viewModel()
+
     val diveViewModel: DiveViewModel = viewModel(
         factory = DiveViewModelFactory(repository)
     )
+
+    val authUiState by authViewModel.uiState.collectAsState()
     val uiState by diveViewModel.uiState.collectAsState()
     val dives = uiState.dives
 
+    LaunchedEffect(Unit) {
+        diveViewModel.syncEvents.collect { message ->
+            snackbarHostState.showSnackbar(message)
+        }
+    }
+
     LaunchedEffect(authUiState.isLoggedIn) {
         if (authUiState.isLoggedIn) {
+            diveViewModel.restoreAfterLoginIfNeeded()
+
             navController.navigate(Routes.DIVE_LIST) {
                 popUpTo(Routes.LOGIN) {
                     inclusive = true
                 }
+                launchSingleTop = true
             }
         }
     }
@@ -62,15 +76,61 @@ fun DiveLogNavGraph() {
             Routes.LOGIN
         }
     ) {
-        composable(Routes.PHOTO_VIEWER) { backStackEntry ->
-            val photoUri = backStackEntry.arguments
-                ?.getString("photoUri")
-                ?: ""
+        composable(Routes.LOGIN) {
+            LoginScreen(
+                authUiState = authUiState,
+                onLoginClick = { email, password ->
+                    authViewModel.login(email, password)
+                },
+                onRegisterClick = { email, password ->
+                    authViewModel.register(email, password)
+                }
+            )
+        }
 
-            PhotoViewerScreen(
-                photoUri = photoUri,
-                onBackClick = {
-                    navController.popBackStack()
+        composable(Routes.DIVE_LIST) {
+            val snackbarMessage = navController.currentBackStackEntry
+                ?.savedStateHandle
+                ?.get<String>("snackbar_message")
+
+            DiveListScreen(
+                dives = dives,
+                isLoading = uiState.isLoading,
+                errorMessage = uiState.errorMessage,
+                isSyncing = uiState.isSyncing,
+                snackbarHostState = snackbarHostState,
+                snackbarMessage = snackbarMessage,
+                onSnackbarShown = {
+                    navController.currentBackStackEntry
+                        ?.savedStateHandle
+                        ?.remove<String>("snackbar_message")
+                },
+                onAddDiveClick = {
+                    navController.navigate(Routes.ADD_DIVE)
+                },
+                onDiveClick = { diveId ->
+                    navController.navigate(Routes.diveDetail(diveId))
+                },
+                onLogoutClick = {
+                    dives.forEach { dive ->
+                        diveViewModel.deleteDive(dive)
+                    }
+
+                    diveViewModel.resetAutoRestoreFlag()
+                    authViewModel.logout()
+
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(Routes.DIVE_LIST) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                },
+                onBackupClick = {
+                    diveViewModel.backupToCloud()
+                },
+                onRestoreClick = {
+                    diveViewModel.restoreFromCloud()
                 }
             )
         }
@@ -78,7 +138,7 @@ fun DiveLogNavGraph() {
         composable(Routes.ADD_DIVE) {
             AddDiveScreen(
                 diveToEdit = null,
-                onSaveDive = { id, title, location, diveType, date, depth, duration, temperature, visibility, notes, photos ->
+                onSaveDive = { _, title, location, diveType, date, depth, duration, temperature, visibility, notes, photos ->
 
                     val savedPhotos = ImageStorageHelper.saveImagesToInternalStorage(
                         context = context,
@@ -113,51 +173,6 @@ fun DiveLogNavGraph() {
             )
         }
 
-        composable(Routes.LOGIN) {
-            LoginScreen(
-                authUiState = authUiState,
-                onLoginClick = { email, password ->
-                    authViewModel.login(email, password)
-                },
-                onRegisterClick = { email, password ->
-                    authViewModel.register(email, password)
-                }
-            )
-        }
-
-        composable(Routes.DIVE_LIST) {
-            val snackbarMessage = navController.currentBackStackEntry
-                ?.savedStateHandle
-                ?.get<String>("snackbar_message")
-
-            DiveListScreen(
-                dives = dives,
-                isLoading = uiState.isLoading,
-                errorMessage = uiState.errorMessage,
-                snackbarMessage = snackbarMessage,
-                onSnackbarShown = {
-                    navController.currentBackStackEntry
-                        ?.savedStateHandle
-                        ?.remove<String>("snackbar_message")
-                },
-                onAddDiveClick = {
-                    navController.navigate(Routes.ADD_DIVE)
-                },
-                onDiveClick = { diveId ->
-                    navController.navigate(Routes.diveDetail(diveId))
-                },
-                onLogoutClick = {
-                    authViewModel.logout()
-
-                    navController.navigate(Routes.LOGIN) {
-                        popUpTo(Routes.DIVE_LIST) {
-                            inclusive = true
-                        }
-                    }
-                }
-            )
-        }
-
         composable(Routes.EDIT_DIVE) { backStackEntry ->
             val diveId = backStackEntry.arguments
                 ?.getString("diveId")
@@ -167,11 +182,24 @@ fun DiveLogNavGraph() {
 
             AddDiveScreen(
                 diveToEdit = selectedDive,
-                onSaveDive = { id, title, location, diveType, date, depth, duration, temperature, visibility, notes, photos ->
+                onSaveDive = { _, title, location, diveType, date, depth, duration, temperature, visibility, notes, photos ->
 
-                    if (selectedDive != null) {
+                    selectedDive?.let { dive ->
+                        val existingPhotos = dive.photos
+
+                        val newPhotos = photos.filterNot { photo ->
+                            existingPhotos.contains(photo)
+                        }
+
+                        val savedNewPhotos = ImageStorageHelper.saveImagesToInternalStorage(
+                            context = context,
+                            uris = newPhotos.map { Uri.parse(it) }
+                        )
+
+                        val finalPhotos = existingPhotos + savedNewPhotos
+
                         diveViewModel.updateDive(
-                            selectedDive.copy(
+                            dive.copy(
                                 title = title,
                                 location = location,
                                 diveType = diveType,
@@ -180,7 +208,11 @@ fun DiveLogNavGraph() {
                                 duration = duration,
                                 waterTemperature = temperature,
                                 visibility = visibility,
-                                notes = notes
+                                notes = notes,
+                                photos = finalPhotos.distinct(),
+                                drawings = dive.drawings,
+                                cloudId = dive.cloudId,
+                                syncId = dive.syncId
                             )
                         )
                     }
@@ -214,8 +246,8 @@ fun DiveLogNavGraph() {
                         navController.navigate(Routes.drawing(dive.id))
                     }
                 },
-                onEditClick = { diveId ->
-                    navController.navigate(Routes.editDive(diveId))
+                onEditClick = { editDiveId ->
+                    navController.navigate(Routes.editDive(editDiveId))
                 },
                 onPhotoClick = { photo ->
                     navController.navigate(
@@ -236,7 +268,9 @@ fun DiveLogNavGraph() {
 
                         diveViewModel.updateDive(updatedDive)
 
-                        FileStorageHelper.deleteFile(item.uri)
+                        if (!item.uri.startsWith("http")) {
+                            FileStorageHelper.deleteFile(item.uri)
+                        }
                     }
                 },
                 onShareClick = { dive ->
@@ -281,6 +315,19 @@ fun DiveLogNavGraph() {
                         ?.savedStateHandle
                         ?.set("snackbar_message", "Dibujo guardado")
 
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Routes.PHOTO_VIEWER) { backStackEntry ->
+            val photoUri = backStackEntry.arguments
+                ?.getString("photoUri")
+                ?: ""
+
+            PhotoViewerScreen(
+                photoUri = photoUri,
+                onBackClick = {
                     navController.popBackStack()
                 }
             )
