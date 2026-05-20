@@ -17,7 +17,7 @@ class SupabaseStorageRepository {
         val file = File(localPath)
 
         if (!file.exists()) {
-            return localPath
+            return cleanRemotePath(localPath)
         }
 
         val extension = file.extension.ifBlank { "jpg" }
@@ -36,15 +36,53 @@ class SupabaseStorageRepository {
     }
 
     suspend fun createSignedUrl(remotePath: String): String {
-        if (remotePath.startsWith("http")) {
-            return remotePath
-        }
-
         return client.storage
             .from("dive-media")
             .createSignedUrl(
-                path = remotePath,
+                path = cleanRemotePath(remotePath),
                 expiresIn = 1.hours
             )
+    }
+
+    suspend fun deleteMedia(remotePath: String) {
+        val cleanPath = cleanRemotePath(remotePath)
+
+        if (cleanPath.isBlank()) return
+        if (cleanPath.startsWith("content://")) return
+        if (cleanPath.startsWith("/data/")) return
+
+        client.storage
+            .from("dive-media")
+            .delete(cleanPath)
+    }
+
+    fun cleanRemotePath(path: String): String {
+        return when {
+            path.contains("/sign/dive-media/") -> {
+                path.substringAfter("/sign/dive-media/")
+                    .substringBefore("?")
+                    .removePrefix("/")
+            }
+
+            path.contains("/object/dive-media/") -> {
+                path.substringAfter("/object/dive-media/")
+                    .substringBefore("?")
+                    .removePrefix("/")
+            }
+
+            path.contains("/storage/v1/object/sign/dive-media/") -> {
+                path.substringAfter("/storage/v1/object/sign/dive-media/")
+                    .substringBefore("?")
+                    .removePrefix("/")
+            }
+
+            path.contains("/storage/v1/object/dive-media/") -> {
+                path.substringAfter("/storage/v1/object/dive-media/")
+                    .substringBefore("?")
+                    .removePrefix("/")
+            }
+
+            else -> path.removePrefix("/")
+        }
     }
 }
