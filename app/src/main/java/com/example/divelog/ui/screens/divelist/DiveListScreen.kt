@@ -1,5 +1,12 @@
 package com.example.divelog.ui.screens.divelist
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,62 +18,56 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.Photo
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Water
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import com.example.divelog.data.model.Dive
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import coil.compose.rememberAsyncImagePainter
+import com.example.divelog.domain.model.Dive
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.filled.Photo
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import coil.compose.rememberAsyncImagePainter
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 
 enum class DiveSortOption(
     val label: String
@@ -83,19 +84,25 @@ enum class DiveSortOption(
 @Composable
 fun DiveListScreen(
     dives: List<Dive>,
+    isLoading: Boolean,
+    errorMessage: String?,
+    isSyncing: Boolean,
+    snackbarHostState: SnackbarHostState,
     snackbarMessage: String?,
     onSnackbarShown: () -> Unit,
     onAddDiveClick: () -> Unit,
-    onDiveClick: (Int) -> Unit
+    onDiveClick: (Int) -> Unit,
+    onLogoutClick: () -> Unit,
+    onBackupClick: () -> Unit,
+    onRestoreClick: () -> Unit
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-
     LaunchedEffect(snackbarMessage) {
         if (!snackbarMessage.isNullOrBlank()) {
             snackbarHostState.showSnackbar(snackbarMessage)
             onSnackbarShown()
         }
     }
+
     var searchText by remember { mutableStateOf("") }
     var expandedSortMenu by remember { mutableStateOf(false) }
     var selectedSortOption by remember { mutableStateOf(DiveSortOption.NEWEST) }
@@ -114,36 +121,83 @@ fun DiveListScreen(
         DiveSortOption.OLDEST -> filteredDives.sortedBy {
             parseDiveDate(it.date) ?: LocalDate.MAX
         }
+
         DiveSortOption.DEEPEST -> filteredDives.sortedByDescending {
-            it.maxDepth.filter { char -> char.isDigit() || char == '.' }.toDoubleOrNull() ?: 0.0
+            it.maxDepth.filter { char -> char.isDigit() || char == '.' }
+                .toDoubleOrNull() ?: 0.0
         }
+
         DiveSortOption.SHALLOWEST -> filteredDives.sortedBy {
-            it.maxDepth.filter { char -> char.isDigit() || char == '.' }.toDoubleOrNull() ?: 0.0
+            it.maxDepth.filter { char -> char.isDigit() || char == '.' }
+                .toDoubleOrNull() ?: 0.0
         }
+
         DiveSortOption.LONGEST -> filteredDives.sortedByDescending {
-            it.duration.filter { char -> char.isDigit() || char == '.' }.toDoubleOrNull() ?: 0.0
+            it.duration.filter { char -> char.isDigit() || char == '.' }
+                .toDoubleOrNull() ?: 0.0
         }
+
         DiveSortOption.SHORTEST -> filteredDives.sortedBy {
-            it.duration.filter { char -> char.isDigit() || char == '.' }.toDoubleOrNull() ?: 0.0
+            it.duration.filter { char -> char.isDigit() || char == '.' }
+                .toDoubleOrNull() ?: 0.0
         }
     }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(
-                            text = "DiveLog",
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Bitácora de submarinismo",
-                            style = MaterialTheme.typography.bodySmall
-                        )
+            Column {
+                TopAppBar(
+                    title = {
+                        Column {
+                            Text(
+                                text = "DiveLog",
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Bitácora de submarinismo",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(
+                            onClick = onBackupClick,
+                            enabled = !isSyncing
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CloudUpload,
+                                contentDescription = "Backup en la nube"
+                            )
+                        }
+
+                        IconButton(
+                            onClick = onRestoreClick,
+                            enabled = !isSyncing
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CloudDownload,
+                                contentDescription = "Restaurar desde la nube"
+                            )
+                        }
+
+                        IconButton(
+                            onClick = onLogoutClick,
+                            enabled = !isSyncing
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Logout,
+                                contentDescription = "Cerrar sesión"
+                            )
+                        }
                     }
+                )
+
+                if (isSyncing) {
+                    LinearProgressIndicator(
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
-            )
+            }
         },
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
@@ -166,116 +220,164 @@ fun DiveListScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .padding(paddingValues)
         ) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                item {
-                    Text(
-                        text = "Mis inmersiones",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    Text(
-                        text = "Registra tus aventuras bajo el agua.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    OutlinedTextField(
-                        value = searchText,
-                        onValueChange = { searchText = it },
-                        label = { Text("Buscar inmersión") },
-                        placeholder = { Text("Título, lugar o fecha") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = "Buscar"
-                            )
-                        },
-
-                        trailingIcon = {
-                            if (searchText.isNotEmpty()) {
-                                IconButton(onClick = { searchText = "" }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = "Limpiar búsqueda"
-                                    )
-                                }
-                            }
-                        }
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
+            when {
+                isLoading -> {
                     Box(
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        OutlinedButton(
-                            onClick = {
-                                expandedSortMenu = true
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Ordenar: ${selectedSortOption.label}")
-                        }
+                        CircularProgressIndicator()
+                    }
+                }
 
-                        DropdownMenu(
-                            expanded = expandedSortMenu,
-                            onDismissRequest = {
-                                expandedSortMenu = false
-                            }
+                errorMessage != null -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Card(
+                            modifier = Modifier.padding(24.dp),
+                            shape = RoundedCornerShape(24.dp),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
                         ) {
-                            DiveSortOption.entries.forEach { option ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(option.label)
-                                    },
-                                    onClick = {
-                                        selectedSortOption = option
-                                        expandedSortMenu = false
-                                    }
+                            Column(
+                                modifier = Modifier.padding(24.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Text(
+                                    text = "Ha ocurrido un error",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold
                                 )
+
+                                Text(
+                                    text = errorMessage,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+
+                                OutlinedButton(
+                                    onClick = onRestoreClick,
+                                    enabled = !isSyncing
+                                ) {
+                                    Text("Volver a intentar")
+                                }
                             }
                         }
                     }
                 }
 
-                if (sortedDives.isEmpty()) {
-                    item {
-                        EmptyDiveList(
-                            onAddDiveClick = onAddDiveClick
-                        )
-                    }
-                } else {
-                    items(
-                        items = sortedDives,
-                        key = { dive -> dive.id }
-                    ) { dive ->
-                        AnimatedVisibility(
-                            visible = true,
-                            enter = fadeIn() + slideInVertically(
-                                initialOffsetY = { it / 2 }
-                            ),
-                            exit = fadeOut() + slideOutVertically(
-                                targetOffsetY = { -it / 2 }
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        item {
+                            Text(
+                                text = "Mis inmersiones",
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Bold
                             )
-                        ) {
-                            DiveCard(
-                                dive = dive,
-                                onClick = {
-                                    onDiveClick(dive.id)
+
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            Text(
+                                text = "Registra tus aventuras bajo el agua.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                            )
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            OutlinedTextField(
+                                value = searchText,
+                                onValueChange = { searchText = it },
+                                label = { Text("Buscar inmersión") },
+                                placeholder = { Text("Título, lugar o fecha") },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Default.Search,
+                                        contentDescription = "Buscar"
+                                    )
+                                },
+                                trailingIcon = {
+                                    if (searchText.isNotEmpty()) {
+                                        IconButton(onClick = { searchText = "" }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Close,
+                                                contentDescription = "Limpiar búsqueda"
+                                            )
+                                        }
+                                    }
                                 }
                             )
+
+                            Spacer(modifier = Modifier.height(10.dp))
+
+                            Box(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                OutlinedButton(
+                                    onClick = {
+                                        expandedSortMenu = true
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Ordenar: ${selectedSortOption.label}")
+                                }
+
+                                DropdownMenu(
+                                    expanded = expandedSortMenu,
+                                    onDismissRequest = {
+                                        expandedSortMenu = false
+                                    }
+                                ) {
+                                    DiveSortOption.entries.forEach { option ->
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(option.label)
+                                            },
+                                            onClick = {
+                                                selectedSortOption = option
+                                                expandedSortMenu = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        if (sortedDives.isEmpty()) {
+                            item {
+                                EmptyDiveList(
+                                    onAddDiveClick = onAddDiveClick
+                                )
+                            }
+                        } else {
+                            items(
+                                items = sortedDives,
+                                key = { dive -> dive.id }
+                            ) { dive ->
+                                AnimatedVisibility(
+                                    visible = true,
+                                    enter = fadeIn() + slideInVertically(
+                                        initialOffsetY = { it / 2 }
+                                    ),
+                                    exit = fadeOut() + slideOutVertically(
+                                        targetOffsetY = { -it / 2 }
+                                    )
+                                ) {
+                                    DiveCard(
+                                        dive = dive,
+                                        onClick = {
+                                            onDiveClick(dive.id)
+                                        }
+                                    )
+                                }
+                            }
                         }
                     }
                 }

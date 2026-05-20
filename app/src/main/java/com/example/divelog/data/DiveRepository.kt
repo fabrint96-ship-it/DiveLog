@@ -1,7 +1,7 @@
 package com.example.divelog.data
 
 import com.example.divelog.data.local.DiveDao
-import com.example.divelog.data.model.Dive
+import com.example.divelog.domain.model.Dive
 import kotlinx.coroutines.flow.Flow
 
 class DiveRepository(

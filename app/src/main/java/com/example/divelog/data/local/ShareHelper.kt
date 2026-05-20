@@ -3,7 +3,7 @@ package com.example.divelog.data.local
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
-import com.example.divelog.data.model.Dive
+import com.example.divelog.domain.model.Dive
 import java.io.File
 
 object ShareHelper {

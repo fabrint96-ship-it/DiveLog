@@ -1,5 +1,15 @@
 package com.example.divelog.ui.screens.adddive
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts.PickMultipleVisualMedia
+import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -8,22 +18,34 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,35 +53,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts.PickMultipleVisualMedia
-import androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import coil.compose.rememberAsyncImagePainter
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.material3.TextButton
+import com.example.divelog.domain.model.Dive
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.DropdownMenuItem
-import com.example.divelog.data.model.Dive
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,10 +88,35 @@ fun AddDiveScreen(
     var duration by remember { mutableStateOf(diveToEdit?.duration?.replace(" min", "") ?: "") }
     var temperature by remember { mutableStateOf(diveToEdit?.waterTemperature?.replace(" ºC", "") ?: "") }
     var visibility by remember { mutableStateOf(diveToEdit?.visibility ?: "") }
-    var visibilityExpanded by remember { mutableStateOf(false) }
     var notes by remember { mutableStateOf(diveToEdit?.notes ?: "") }
-    var selectedPhotos by remember { mutableStateOf<List<Uri>>(emptyList()) }
 
+    var selectedPhotos by remember {
+        mutableStateOf<List<Uri>>(
+            diveToEdit?.photos?.map { Uri.parse(it) } ?: emptyList()
+        )
+    }
+
+    var showError by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    var diveTypeExpanded by remember { mutableStateOf(false) }
+    var visibilityExpanded by remember { mutableStateOf(false) }
+
+    val datePickerState = rememberDatePickerState()
+
+    val dateFormatter = remember {
+        SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+    }
+
+    val diveTypes = listOf(
+        "Costa",
+        "Barco",
+        "Nocturna",
+        "Cueva",
+        "Pecio",
+        "Profunda",
+        "Fotografía",
+        "Entrenamiento"
+    )
 
     val visibilityOptions = listOf(
         "Excelente / +20 m",
@@ -100,15 +125,6 @@ fun AddDiveScreen(
         "Baja / 2-5 m",
         "Muy baja / <2 m"
     )
-
-    var showError by remember { mutableStateOf(false) }
-    var showDatePicker by remember { mutableStateOf(false) }
-
-    val datePickerState = rememberDatePickerState()
-
-    val dateFormatter = remember {
-        SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-    }
 
     val depthNumber = depth.toDoubleOrNull()
     val durationNumber = duration.toIntOrNull()
@@ -126,21 +142,8 @@ fun AddDiveScreen(
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = PickMultipleVisualMedia(maxItems = 5),
         onResult = { uris ->
-            selectedPhotos = uris
+            selectedPhotos = (selectedPhotos + uris).distinctBy { it.toString() }
         }
-    )
-
-    var diveTypeExpanded by remember { mutableStateOf(false) }
-
-    val diveTypes = listOf(
-        "Costa",
-        "Barco",
-        "Nocturna",
-        "Cueva",
-        "Pecio",
-        "Profunda",
-        "Fotografía",
-        "Entrenamiento"
     )
 
     Scaffold(
@@ -148,7 +151,7 @@ fun AddDiveScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Nueva inmersión",
+                        text = if (diveToEdit == null) "Nueva inmersión" else "Editar inmersión",
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -194,9 +197,7 @@ fun AddDiveScreen(
                     }
                 }
             ) {
-                DatePicker(
-                    state = datePickerState
-                )
+                DatePicker(state = datePickerState)
             }
         }
 
@@ -284,9 +285,7 @@ fun AddDiveScreen(
                             ) {
                                 diveTypes.forEach { type ->
                                     DropdownMenuItem(
-                                        text = {
-                                            Text(type)
-                                        },
+                                        text = { Text(type) },
                                         onClick = {
                                             diveType = type
                                             diveTypeExpanded = false
@@ -357,7 +356,9 @@ fun AddDiveScreen(
 
                         OutlinedTextField(
                             value = temperature,
-                            onValueChange = { temperature = it },
+                            onValueChange = { value ->
+                                temperature = value.filter { it.isDigit() || it == '.' }
+                            },
                             label = { Text("Temperatura del agua") },
                             placeholder = { Text("Ej: 21") },
                             modifier = Modifier.fillMaxWidth(),
@@ -398,9 +399,7 @@ fun AddDiveScreen(
                             ) {
                                 visibilityOptions.forEach { option ->
                                     DropdownMenuItem(
-                                        text = {
-                                            Text(option)
-                                        },
+                                        text = { Text(option) },
                                         onClick = {
                                             visibility = option
                                             visibilityExpanded = false
@@ -453,7 +452,10 @@ fun AddDiveScreen(
                         LazyRow(
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            items(selectedPhotos) { uri ->
+                            items(
+                                items = selectedPhotos,
+                                key = { it.toString() }
+                            ) { uri ->
                                 Image(
                                     painter = rememberAsyncImagePainter(uri),
                                     contentDescription = "Foto seleccionada",
