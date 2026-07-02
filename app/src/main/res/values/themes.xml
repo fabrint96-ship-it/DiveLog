@@ -2,4 +2,14 @@
 <resources>
 
     <style name="Theme.DiveLog" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.DiveLog.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/divelog_logo</item>
+        <item name="windowSplashScreenIconBackgroundColor">
+            @color/splash_icon_background
+        </item>
+        <item name="postSplashScreenTheme">
+            @style/Theme.DiveLog
+        </item>
+    </style>
 </resources>
