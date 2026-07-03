@@ -9,6 +9,8 @@ object Routes {
     const val DRAWING = "drawing/{diveId}"
     const val PHOTO_VIEWER = "photo_viewer/{photoUri}"
 
+    const val AUTH_LOADING = "auth_loading"
+
     fun diveDetail(diveId: Int): String = "dive_detail/$diveId"
     fun editDive(diveId: Int): String = "edit_dive/$diveId"
 

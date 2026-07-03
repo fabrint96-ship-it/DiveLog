@@ -58,9 +58,9 @@ dependencies {
     implementation(libs.androidx.core.ktx)
 
     implementation(platform("io.github.jan-tennert.supabase:bom:3.5.0"))
-    implementation("io.github.jan-tennert.supabase:postgrest-kt:2.5.1")
-    implementation("io.github.jan-tennert.supabase:auth-kt:2.5.1")
-    implementation("io.github.jan-tennert.supabase:storage-kt:2.5.1")
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
+    implementation("io.github.jan-tennert.supabase:auth-kt")
+    implementation("io.github.jan-tennert.supabase:storage-kt")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
     implementation("io.ktor:ktor-client-android:3.0.1")

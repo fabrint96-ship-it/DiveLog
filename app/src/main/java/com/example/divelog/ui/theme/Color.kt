@@ -2,10 +2,11 @@ package com.example.divelog.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+val DiveDeepBlue = Color(0xFF003B5C)
+val DiveOceanBlue = Color(0xFF005F73)
+val DiveTeal = Color(0xFF0A9396)
+val DiveSand = Color(0xFFE9D8A6)
+val DiveFoam = Color(0xFFF8FBFF)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+val DiveDarkBackground = Color(0xFF001F2F)
+val DiveDarkSurface = Color(0xFF073B4C)
