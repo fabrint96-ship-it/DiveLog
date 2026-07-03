@@ -1,18 +1,15 @@
 package com.example.divelog.ui.screens.divelist
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,34 +21,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.CloudDownload
-import androidx.compose.material.icons.filled.CloudUpload
-import androidx.compose.material.icons.filled.Logout
-import androidx.compose.material.icons.filled.Photo
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Water
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -60,14 +41,39 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil.compose.rememberAsyncImagePainter
 import com.example.divelog.domain.model.Dive
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import com.example.divelog.ui.components.navigation.DiveHomeHeader
+import com.example.divelog.ui.components.cards.DiveCard
+import androidx.compose.material3.ExtendedFloatingActionButton
+import com.example.divelog.ui.theme.DiveTeal
+import com.example.divelog.ui.theme.DiveFoam
+import androidx.compose.material.icons.filled.Sort
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.FilterChipDefaults
+import com.example.divelog.ui.theme.DiveDeepBlue
+import com.example.divelog.ui.theme.DiveFoam
+import com.example.divelog.ui.theme.DiveOceanBlue
+import com.example.divelog.ui.theme.DiveTeal
+import androidx.compose.ui.graphics.Brush
+import com.example.divelog.ui.components.buttons.DiveButton
+import com.example.divelog.ui.theme.DiveDeepBlue
+import com.example.divelog.ui.theme.DiveFoam
+import com.example.divelog.ui.theme.DiveOceanBlue
+import com.example.divelog.ui.theme.DiveTeal
+import com.example.divelog.ui.components.loading.DiveLoading
+import com.example.divelog.ui.components.common.DiveErrorState
+import com.example.divelog.ui.components.buttons.DiveFAB
+import com.example.divelog.ui.theme.DiveDeepBlue
+import com.example.divelog.ui.theme.DiveOceanBlue
+import com.example.divelog.ui.theme.DiveTeal
+import com.example.divelog.ui.theme.DiveFoam
 
 enum class DiveSortOption(
     val label: String
@@ -104,7 +110,8 @@ fun DiveListScreen(
     }
 
     var searchText by remember { mutableStateOf("") }
-    var expandedSortMenu by remember { mutableStateOf(false) }
+    var showSortSheet by remember { mutableStateOf(false) }
+    val sortSheetState = rememberModalBottomSheetState()
     var selectedSortOption by remember { mutableStateOf(DiveSortOption.NEWEST) }
 
     val filteredDives = dives.filter { dive ->
@@ -143,91 +150,57 @@ fun DiveListScreen(
         }
     }
 
+    var isSearchMode by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
-            Column {
-                TopAppBar(
-                    title = {
-                        Column {
-                            Text(
-                                text = "DiveLog",
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "Bitácora de submarinismo",
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                        }
-                    },
-                    actions = {
-                        IconButton(
-                            onClick = onBackupClick,
-                            enabled = !isSyncing
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CloudUpload,
-                                contentDescription = "Backup en la nube"
-                            )
-                        }
-
-                        IconButton(
-                            onClick = onRestoreClick,
-                            enabled = !isSyncing
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CloudDownload,
-                                contentDescription = "Restaurar desde la nube"
-                            )
-                        }
-
-                        IconButton(
-                            onClick = onLogoutClick,
-                            enabled = !isSyncing
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Logout,
-                                contentDescription = "Cerrar sesión"
-                            )
-                        }
-                    }
-                )
-
-                if (isSyncing) {
-                    LinearProgressIndicator(
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
+            DiveHomeHeader(
+                isSyncing = isSyncing,
+                isSearchMode = isSearchMode,
+                searchText = searchText,
+                onSearchTextChange = { searchText = it },
+                onSearchClick = {
+                    isSearchMode = true
+                },
+                onCloseSearchClick = {
+                    isSearchMode = false
+                    searchText = ""
+                },
+                onBackupClick = onBackupClick,
+                onRestoreClick = onRestoreClick,
+                onLogoutClick = onLogoutClick
+            )
         },
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
         },
         floatingActionButton = {
-            FloatingActionButton(
+            DiveFAB(
+                text = "Nueva inmersión",
                 onClick = onAddDiveClick
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Añadir inmersión"
-                )
-            }
+            )
         }
     ) { paddingValues ->
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            DiveDeepBlue,
+                            DiveOceanBlue,
+                            DiveTeal.copy(alpha = 0.85f)
+                        )
+                    )
+                )
                 .padding(paddingValues)
         ) {
             when {
                 isLoading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
+                    DiveLoading(
+                        text = "Cargando tus inmersiones..."
+                    )
                 }
 
                 errorMessage != null -> {
@@ -235,35 +208,10 @@ fun DiveListScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Card(
-                            modifier = Modifier.padding(24.dp),
-                            shape = RoundedCornerShape(24.dp),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(24.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Text(
-                                    text = "Ha ocurrido un error",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold
-                                )
-
-                                Text(
-                                    text = errorMessage,
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-
-                                OutlinedButton(
-                                    onClick = onRestoreClick,
-                                    enabled = !isSyncing
-                                ) {
-                                    Text("Volver a intentar")
-                                }
-                            }
-                        }
+                        DiveErrorState(
+                            message = errorMessage,
+                            onActionClick = onRestoreClick
+                        )
                     }
                 }
 
@@ -277,7 +225,8 @@ fun DiveListScreen(
                             Text(
                                 text = "Mis inmersiones",
                                 style = MaterialTheme.typography.headlineMedium,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                color = DiveFoam
                             )
 
                             Spacer(modifier = Modifier.height(6.dp))
@@ -285,68 +234,42 @@ fun DiveListScreen(
                             Text(
                                 text = "Registra tus aventuras bajo el agua.",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+                                color = DiveFoam.copy(alpha = 0.82f)
                             )
 
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            OutlinedTextField(
-                                value = searchText,
-                                onValueChange = { searchText = it },
-                                label = { Text("Buscar inmersión") },
-                                placeholder = { Text("Título, lugar o fecha") },
-                                modifier = Modifier.fillMaxWidth(),
-                                singleLine = true,
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Default.Search,
-                                        contentDescription = "Buscar"
-                                    )
-                                },
-                                trailingIcon = {
-                                    if (searchText.isNotEmpty()) {
-                                        IconButton(onClick = { searchText = "" }) {
-                                            Icon(
-                                                imageVector = Icons.Default.Close,
-                                                contentDescription = "Limpiar búsqueda"
-                                            )
-                                        }
-                                    }
-                                }
-                            )
-
-                            Spacer(modifier = Modifier.height(10.dp))
-
                             Box(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                OutlinedButton(
-                                    onClick = {
-                                        expandedSortMenu = true
-                                    },
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text("Ordenar: ${selectedSortOption.label}")
-                                }
-
-                                DropdownMenu(
-                                    expanded = expandedSortMenu,
-                                    onDismissRequest = {
-                                        expandedSortMenu = false
-                                    }
-                                ) {
-                                    DiveSortOption.entries.forEach { option ->
-                                        DropdownMenuItem(
-                                            text = {
-                                                Text(option.label)
-                                            },
-                                            onClick = {
-                                                selectedSortOption = option
-                                                expandedSortMenu = false
-                                            }
+                                FilterChip(
+                                    selected = true,
+                                    onClick = { showSortSheet = true },
+                                    label = {
+                                        Text(
+                                            text = "Ordenar: ${selectedSortOption.label}",
+                                            color = DiveFoam
                                         )
-                                    }
-                                }
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Sort,
+                                            contentDescription = null,
+                                            tint = DiveFoam
+                                        )
+                                    },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = DiveOceanBlue,
+                                        selectedLabelColor = DiveFoam,
+                                        selectedLeadingIconColor = DiveFoam
+                                    ),
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = true,
+                                        borderColor = DiveTeal,
+                                        selectedBorderColor = DiveTeal
+                                    )
+                                )
                             }
                         }
 
@@ -382,106 +305,67 @@ fun DiveListScreen(
                     }
                 }
             }
-        }
-    }
-}
 
-@Composable
-fun DiveCard(
-    dive: Dive,
-    onClick: () -> Unit
-) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .animateContentSize(),
-        shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (dive.photos.isNotEmpty()) {
-                Image(
-                    painter = rememberAsyncImagePainter(dive.photos.first()),
-                    contentDescription = "Foto de ${dive.title}",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(150.dp)
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(150.dp)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                    contentAlignment = Alignment.Center
+            if (showSortSheet) {
+                ModalBottomSheet(
+                    onDismissRequest = { showSortSheet = false },
+                    sheetState = sortSheetState,
+                    containerColor = DiveDeepBlue
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Photo,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(42.dp)
-                    )
-                }
-            }
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = "Ordenar inmersiones",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = DiveFoam
+                        )
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Text(
-                    text = dive.title,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
+                        DiveSortOption.entries.forEach { option ->
+                            FilterChip(
+                                selected = selectedSortOption == option,
+                                onClick = {
+                                    selectedSortOption = option
+                                    showSortSheet = false
+                                },
+                                label = {
+                                    Text(option.label)
+                                },
+                                leadingIcon = {
+                                    if (selectedSortOption == option) {
+                                        Icon(
+                                            imageVector = Icons.Default.Sort,
+                                            contentDescription = null
+                                        )
+                                    }
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    containerColor = DiveOceanBlue.copy(alpha = 0.45f),
+                                    labelColor = DiveFoam,
+                                    iconColor = DiveFoam,
+                                    selectedContainerColor = DiveTeal,
+                                    selectedLabelColor = DiveFoam,
+                                    selectedLeadingIconColor = DiveFoam
+                                ),
+                                border = FilterChipDefaults.filterChipBorder(
+                                    enabled = true,
+                                    selected = selectedSortOption == option,
+                                    borderColor = DiveFoam.copy(alpha = 0.25f),
+                                    selectedBorderColor = DiveFoam
+                                )
+                            )
+                        }
 
-                Text(
-                    text = dive.location,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-
-                Text(
-                    text = dive.date,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    DiveInfoChip(text = dive.maxDepth)
-                    DiveInfoChip(text = dive.duration)
-
-                    if (dive.diveType.isNotBlank()) {
-                        DiveInfoChip(text = dive.diveType)
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
             }
         }
     }
-}
-
-@Composable
-fun DiveInfoChip(
-    text: String
-) {
-    AssistChip(
-        onClick = {},
-        label = {
-            Text(text = text)
-        },
-        colors = AssistChipDefaults.assistChipColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-            labelColor = MaterialTheme.colorScheme.onSecondaryContainer
-        )
-    )
 }
 
 @Composable
@@ -492,38 +376,56 @@ fun EmptyDiveList(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 24.dp),
-        shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+        shape = RoundedCornerShape(28.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = DiveDeepBlue.copy(alpha = 0.92f)
+        )
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(28.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            DiveDeepBlue,
+                            DiveOceanBlue,
+                            DiveTeal
+                        )
+                    )
+                )
+                .padding(30.dp),
+            contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.Water,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
-            )
-
-            Text(
-                text = "Aún no tienes inmersiones",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-
-            Text(
-                text = "Empieza registrando tu primera aventura submarina.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-            )
-
-            Button(
-                onClick = onAddDiveClick
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text("Añadir primera inmersión")
+                Icon(
+                    imageVector = Icons.Default.Water,
+                    contentDescription = null,
+                    tint = DiveFoam,
+                    modifier = Modifier.size(56.dp)
+                )
+
+                Text(
+                    text = "Aún no tienes inmersiones",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = DiveFoam
+                )
+
+                Text(
+                    text = "Registra tu primera aventura bajo el agua y empieza a construir tu bitácora submarina.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = DiveFoam.copy(alpha = 0.82f)
+                )
+
+                DiveButton(
+                    text = "Añadir primera inmersión",
+                    onClick = onAddDiveClick
+                )
             }
         }
     }

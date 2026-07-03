@@ -1,25 +1,24 @@
 package com.example.divelog.ui.screens.login
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Waves
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -28,14 +27,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.divelog.ui.components.buttons.DiveButton
+import com.example.divelog.ui.components.buttons.DiveOutlinedButton
+import com.example.divelog.ui.components.textfields.DivePasswordField
+import com.example.divelog.ui.theme.DiveDeepBlue
+import com.example.divelog.ui.theme.DiveFoam
+import com.example.divelog.ui.theme.DiveOceanBlue
+import com.example.divelog.ui.theme.DiveTeal
 import com.example.divelog.viewmodel.AuthUiState
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.IconButton
-import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.res.painterResource
+import com.example.divelog.R
 
 @Composable
 fun LoginScreen(
@@ -47,117 +55,140 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
-    Scaffold { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        DiveDeepBlue,
+                        DiveOceanBlue,
+                        DiveTeal
+                    )
+                )
+            )
+            .padding(24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(28.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = DiveDeepBlue.copy(alpha = 0.78f)
+            ),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 8.dp
+            )
         ) {
-            Icon(
-                imageVector = Icons.Default.Waves,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = "DiveLog",
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold
-            )
-
-            Text(
-                text = "Accede a tu bitácora submarina",
-                style = MaterialTheme.typography.bodyMedium
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                Column(
-                    modifier = Modifier.padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    OutlinedTextField(
-                        value = email,
-                        onValueChange = { email = it },
-                        label = { Text("Email") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
+                Image(
+                    painter = painterResource(id = R.drawable.divelog_logo),
+                    contentDescription = "Logo de DiveLog",
+                    modifier = Modifier.size(110.dp)
+                )
 
-                    OutlinedTextField(
-                        value = password,
-                        onValueChange = { password = it },
-                        label = { Text("Contraseña") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        visualTransformation = if (passwordVisible) {
-                            VisualTransformation.None
-                        } else {
-                            PasswordVisualTransformation()
-                        },
-                        trailingIcon = {
-                            IconButton(
-                                onClick = {
-                                    passwordVisible = !passwordVisible
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = if (passwordVisible) {
-                                        Icons.Default.VisibilityOff
-                                    } else {
-                                        Icons.Default.Visibility
-                                    },
-                                    contentDescription = "Mostrar u ocultar contraseña"
-                                )
-                            }
-                        }
-                    )
+                Spacer(modifier = Modifier.height(18.dp))
 
-                    if (authUiState.errorMessage != null) {
-                        Text(
-                            text = authUiState.errorMessage,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall
+                Text(
+                    text = "DiveLog",
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = DiveFoam,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Tu bitácora submarina",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = DiveFoam.copy(alpha = 0.82f),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = {
+                        Text("Correo electrónico")
+                    },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Email,
+                            contentDescription = null
                         )
-                    }
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedBorderColor = DiveTeal,
+                        unfocusedBorderColor = DiveFoam.copy(alpha = 0.45f),
+                        focusedLabelColor = DiveTeal,
+                        unfocusedLabelColor = DiveFoam.copy(alpha = 0.75f),
+                        cursorColor = DiveTeal,
+                        focusedLeadingIconColor = DiveTeal,
+                        unfocusedLeadingIconColor = DiveFoam.copy(alpha = 0.75f)
+                    )
+                )
 
-                    Button(
-                        onClick = {
-                            onLoginClick(email, password)
-                        },
-                        enabled = !authUiState.isLoading,
-                        modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(14.dp)
-                    ) {
-                        if (authUiState.isLoading) {
-                            CircularProgressIndicator()
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.Lock,
-                                contentDescription = null
-                            )
-                            Text(" Iniciar sesión")
-                        }
-                    }
+                Spacer(modifier = Modifier.height(16.dp))
 
-                    OutlinedButton(
+                DivePasswordField(
+                    value = password,
+                    onValueChange = { password = it },
+                    passwordVisible = passwordVisible,
+                    onTogglePasswordVisibility = {
+                        passwordVisible = !passwordVisible
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                authUiState.errorMessage?.let { message ->
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = message,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(28.dp))
+
+                if (authUiState.isLoading) {
+                    CircularProgressIndicator(
+                        color = DiveFoam
+                    )
+                } else {
+                    DiveButton(
+                        text = "Iniciar sesión",
                         onClick = {
-                            onRegisterClick(email, password)
+                            onLoginClick(email.trim(), password)
                         },
-                        enabled = !authUiState.isLoading,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Crear cuenta")
-                    }
+                        enabled = email.isNotBlank() && password.isNotBlank()
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    DiveOutlinedButton(
+                        text = "Crear cuenta nueva",
+                        onClick = {
+                            onRegisterClick(email.trim(), password)
+                        },
+                        enabled = email.isNotBlank() && password.isNotBlank()
+                    )
                 }
             }
         }
