@@ -29,6 +29,28 @@ import com.example.divelog.ui.screens.photoviewer.PhotoViewerScreen
 import com.example.divelog.viewmodel.AuthViewModel
 import com.example.divelog.viewmodel.DiveViewModel
 import com.example.divelog.viewmodel.DiveViewModelFactory
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import com.example.divelog.ui.theme.DiveDeepBlue
+import com.example.divelog.ui.theme.DiveOceanBlue
+import com.example.divelog.ui.theme.DiveTeal
 
 @Composable
 fun DiveLogNavGraph() {
@@ -55,27 +77,36 @@ fun DiveLogNavGraph() {
         }
     }
 
-    LaunchedEffect(authUiState.isLoggedIn) {
-        if (authUiState.isLoggedIn) {
-            diveViewModel.restoreAfterLoginIfNeeded()
+    LaunchedEffect(authUiState.isLoading, authUiState.isLoggedIn) {
+        if (!authUiState.isLoading) {
+            if (authUiState.isLoggedIn) {
+                diveViewModel.restoreAfterLoginIfNeeded()
 
-            navController.navigate(Routes.DIVE_LIST) {
-                popUpTo(Routes.LOGIN) {
-                    inclusive = true
+                navController.navigate(Routes.DIVE_LIST) {
+                    popUpTo(Routes.AUTH_LOADING) {
+                        inclusive = true
+                    }
+                    launchSingleTop = true
                 }
-                launchSingleTop = true
+            } else {
+                navController.navigate(Routes.LOGIN) {
+                    popUpTo(Routes.AUTH_LOADING) {
+                        inclusive = true
+                    }
+                    launchSingleTop = true
+                }
             }
         }
     }
 
     NavHost(
         navController = navController,
-        startDestination = if (authUiState.isLoggedIn) {
-            Routes.DIVE_LIST
-        } else {
-            Routes.LOGIN
-        }
+        startDestination = Routes.AUTH_LOADING
     ) {
+        composable(Routes.AUTH_LOADING) {
+            AuthLoadingScreen()
+        }
+
         composable(Routes.LOGIN) {
             LoginScreen(
                 authUiState = authUiState,
@@ -330,6 +361,43 @@ fun DiveLogNavGraph() {
                 onBackClick = {
                     navController.popBackStack()
                 }
+            )
+        }
+    }
+}
+
+@Composable
+fun AuthLoadingScreen() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(DiveDeepBlue, DiveOceanBlue, DiveTeal)
+                )
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+
+            CircularProgressIndicator(
+                color = Color.White,
+                strokeWidth = 3.dp
+            )
+
+            Text(
+                text = "DiveLog",
+                color = Color.White,
+                style = MaterialTheme.typography.headlineLarge
+            )
+
+            Text(
+                text = "Tu bitácora submarina",
+                color = Color.White.copy(alpha = 0.85f),
+                style = MaterialTheme.typography.bodyLarge
             )
         }
     }
