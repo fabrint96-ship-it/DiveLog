@@ -12,6 +12,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.divelog.ui.theme.DiveFoam
 import com.example.divelog.ui.theme.DiveTeal
+import com.example.divelog.ui.theme.Dimens
 
 @Composable
 fun DiveFAB(
@@ -36,6 +37,6 @@ fun DiveFAB(
         },
         containerColor = DiveTeal,
         contentColor = DiveFoam,
-        shape = RoundedCornerShape(20.dp)
+        shape = RoundedCornerShape(Dimens.RadiusCircle)
     )
 }

@@ -51,6 +51,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import com.example.divelog.ui.theme.DiveAnimations
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
@@ -96,10 +97,8 @@ fun PhotoViewerScreen(
         AnimatedContent(
             targetState = showPostcardBack,
             transitionSpec = {
-                (fadeIn(animationSpec = tween(220)) + scaleIn(initialScale = 0.96f))
-                    .togetherWith(
-                        fadeOut(animationSpec = tween(180)) + scaleOut(targetScale = 1.04f)
-                    )
+                DiveAnimations.scaleEnter()
+                    .togetherWith(DiveAnimations.scaleExit())
             },
             label = "PhotoPostcardTransition"
         ) { isBack ->
@@ -221,8 +220,8 @@ fun PhotoViewerScreen(
 
         AnimatedVisibility(
             visible = showZoomIndicator,
-            enter = fadeIn(),
-            exit = fadeOut(),
+            enter = DiveAnimations.fadeInMedium(),
+            exit = DiveAnimations.fadeOutFast(),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 32.dp)

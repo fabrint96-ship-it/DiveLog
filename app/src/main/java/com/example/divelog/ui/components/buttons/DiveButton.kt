@@ -13,6 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.divelog.ui.theme.DiveFoam
 import com.example.divelog.ui.theme.DiveTeal
+import com.example.divelog.ui.theme.Dimens
 
 @Composable
 fun DiveButton(
@@ -26,8 +27,8 @@ fun DiveButton(
         enabled = enabled,
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp),
-        shape = RoundedCornerShape(18.dp),
+            .height(Dimens.ButtonHeight),
+        shape = RoundedCornerShape(Dimens.RadiusM),
         colors = ButtonDefaults.buttonColors(
             containerColor = DiveTeal,
             contentColor = DiveFoam,

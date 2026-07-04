@@ -13,6 +13,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.divelog.ui.theme.DiveFoam
 import com.example.divelog.ui.theme.DiveTeal
+import com.example.divelog.ui.theme.Dimens
 
 @Composable
 fun DiveFormTextField(
@@ -46,7 +47,7 @@ fun DiveFormTextField(
         trailingIcon = trailingIcon,
         visualTransformation = visualTransformation,
         keyboardOptions = keyboardOptions,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(Dimens.RadiusM),
         colors = OutlinedTextFieldDefaults.colors(
             focusedTextColor = DiveFoam,
             unfocusedTextColor = DiveFoam,

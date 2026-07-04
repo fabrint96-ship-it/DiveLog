@@ -17,6 +17,7 @@ import com.example.divelog.ui.theme.DiveDeepBlue
 import com.example.divelog.ui.theme.DiveFoam
 import com.example.divelog.ui.theme.DiveOceanBlue
 import com.example.divelog.ui.theme.DiveTeal
+import com.example.divelog.ui.theme.Dimens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,7 +53,7 @@ fun DiveDropdownField(
                     expanded = expanded
                 )
             },
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(Dimens.RadiusM),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor = DiveFoam,
                 unfocusedTextColor = DiveFoam,

@@ -76,6 +76,7 @@ import androidx.compose.ui.layout.ContentScale
 import com.example.divelog.ui.theme.DiveDeepBlue
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.example.divelog.ui.components.common.DiveValidationErrorCard
+import com.example.divelog.ui.theme.DiveAnimations
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -250,9 +251,7 @@ fun AddDiveScreen(
 
                     AnimatedVisibility(
                         visible = true,
-                        enter = fadeIn() + slideInVertically(
-                            initialOffsetY = { it / 4 }
-                        )
+                        enter = DiveAnimations.cardEnter()
                     ) {
                         Column(
                             verticalArrangement = Arrangement.spacedBy(14.dp)
