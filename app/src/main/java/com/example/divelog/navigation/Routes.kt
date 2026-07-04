@@ -7,7 +7,7 @@ object Routes {
     const val DIVE_DETAIL = "dive_detail/{diveId}"
     const val EDIT_DIVE = "edit_dive/{diveId}"
     const val DRAWING = "drawing/{diveId}"
-    const val PHOTO_VIEWER = "photo_viewer/{photoUri}"
+    const val PHOTO_VIEWER = "photo_viewer/{diveId}/{photoUri}"
 
     const val AUTH_LOADING = "auth_loading"
 
@@ -15,5 +15,6 @@ object Routes {
     fun editDive(diveId: Int): String = "edit_dive/$diveId"
 
     fun drawing(diveId: Int): String = "drawing/$diveId"
-    fun photoViewer(photoUri: String): String = "photo_viewer/$photoUri"
+    fun photoViewer(diveId: Int, photoUri: String): String =
+        "photo_viewer/$diveId/$photoUri"
 }

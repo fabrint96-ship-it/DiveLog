@@ -6,16 +6,22 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.divelog.domain.model.Dive
+import com.example.divelog.domain.model.DiveMediaNote
+import com.example.divelog.data.local.DiveMediaNoteDao
 
 @Database(
-    entities = [Dive::class],
-    version = 3,
+    entities = [
+        Dive::class,
+        DiveMediaNote::class
+    ],
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
 abstract class DiveDatabase : RoomDatabase() {
 
     abstract fun diveDao(): DiveDao
+    abstract fun diveMediaNoteDao(): DiveMediaNoteDao
 
     companion object {
         @Volatile

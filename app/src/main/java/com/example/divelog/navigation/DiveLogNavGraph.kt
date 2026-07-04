@@ -51,6 +51,9 @@ import androidx.compose.ui.unit.dp
 import com.example.divelog.ui.theme.DiveDeepBlue
 import com.example.divelog.ui.theme.DiveOceanBlue
 import com.example.divelog.ui.theme.DiveTeal
+import com.example.divelog.data.DiveMediaNoteRepository
+import com.example.divelog.viewmodel.DiveMediaNoteViewModel
+import com.example.divelog.viewmodel.DiveMediaNoteViewModelFactory
 
 @Composable
 fun DiveLogNavGraph() {
@@ -60,6 +63,14 @@ fun DiveLogNavGraph() {
 
     val database = DiveDatabase.getDatabase(context)
     val repository = DiveRepository(database.diveDao())
+
+    val mediaNoteRepository = DiveMediaNoteRepository(
+        database.diveMediaNoteDao()
+    )
+
+    val mediaNoteViewModel: DiveMediaNoteViewModel = viewModel(
+        factory = DiveMediaNoteViewModelFactory(mediaNoteRepository)
+    )
 
     val authViewModel: AuthViewModel = viewModel()
 
@@ -281,9 +292,14 @@ fun DiveLogNavGraph() {
                     navController.navigate(Routes.editDive(editDiveId))
                 },
                 onPhotoClick = { photo ->
-                    navController.navigate(
-                        Routes.photoViewer(Uri.encode(photo))
-                    )
+                    selectedDive?.let { currentDive ->
+                        navController.navigate(
+                            Routes.photoViewer(
+                                currentDive.id,
+                                Uri.encode(photo)
+                            )
+                        )
+                    }
                 },
                 onDeleteGalleryItem = { item ->
                     selectedDive?.let { dive ->
@@ -352,12 +368,34 @@ fun DiveLogNavGraph() {
         }
 
         composable(Routes.PHOTO_VIEWER) { backStackEntry ->
+            val diveId = backStackEntry.arguments
+                ?.getString("diveId")
+                ?.toIntOrNull()
+                ?: 0
+
             val photoUri = backStackEntry.arguments
                 ?.getString("photoUri")
                 ?: ""
 
+            val decodedPhotoUri = Uri.decode(photoUri)
+
+            val mediaNote by mediaNoteViewModel.note.collectAsState()
+
+            LaunchedEffect(decodedPhotoUri) {
+                mediaNoteViewModel.loadNote(decodedPhotoUri)
+            }
+
             PhotoViewerScreen(
-                photoUri = photoUri,
+                photoUri = decodedPhotoUri,
+                initialNote = mediaNote?.note ?: "",
+                onSavePostcardNote = { noteText ->
+                    mediaNoteViewModel.saveNote(
+                        diveId = diveId,
+                        mediaUri = decodedPhotoUri,
+                        mediaType = "PHOTO",
+                        noteText = noteText
+                    )
+                },
                 onBackClick = {
                     navController.popBackStack()
                 }
