@@ -25,7 +25,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
@@ -33,18 +32,13 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -60,6 +54,28 @@ import com.example.divelog.domain.model.Dive
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.example.divelog.ui.components.navigation.DiveEditorHeader
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.graphics.Brush
+import com.example.divelog.ui.theme.DiveDeepBlue
+import com.example.divelog.ui.theme.DiveOceanBlue
+import com.example.divelog.ui.theme.DiveTeal
+import com.example.divelog.ui.theme.DiveFoam
+import com.example.divelog.ui.components.cards.DiveSectionCard
+import com.example.divelog.ui.components.textfields.DiveFormTextField
+import com.example.divelog.ui.components.textfields.DiveDropdownField
+import com.example.divelog.ui.components.buttons.DiveButton
+import com.example.divelog.ui.theme.DiveFoam
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import com.example.divelog.ui.theme.DiveDeepBlue
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.example.divelog.ui.components.common.DiveValidationErrorCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -133,6 +149,14 @@ fun AddDiveScreen(
     val isDurationValid = durationNumber != null && durationNumber > 0
     val isDateValid = date.isNotBlank()
 
+    val validationErrors = buildList {
+        if (title.isBlank()) add("El título es obligatorio.")
+        if (location.isBlank()) add("El lugar es obligatorio.")
+        if (!isDateValid) add("Selecciona una fecha válida.")
+        if (!isDepthValid) add("La profundidad debe estar entre 0 y 100 metros.")
+        if (!isDurationValid) add("La duración debe ser mayor que 0 minutos.")
+    }
+
     val isFormValid = title.isNotBlank() &&
             location.isNotBlank() &&
             isDateValid &&
@@ -147,22 +171,11 @@ fun AddDiveScreen(
     )
 
     Scaffold(
+        containerColor = DiveDeepBlue,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = if (diveToEdit == null) "Nueva inmersión" else "Editar inmersión",
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Volver"
-                        )
-                    }
-                }
+            DiveEditorHeader(
+                isEditMode = diveToEdit != null,
+                onBackClick = onBackClick
             )
         }
     ) { paddingValues ->
@@ -201,252 +214,201 @@ fun AddDiveScreen(
             }
         }
 
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            Text(
-                text = "Datos de la inmersión",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-
-            Text(
-                text = "Completa la información principal de tu salida bajo el agua.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
-            )
-
-            AnimatedVisibility(
-                visible = true,
-                enter = fadeIn() + slideInVertically(
-                    initialOffsetY = { it / 4 }
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            DiveDeepBlue,
+                            DiveOceanBlue,
+                            DiveTeal.copy(alpha = 0.85f)
+                        )
+                    )
                 )
+                .padding(paddingValues)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = title,
-                            onValueChange = { title = it },
-                            label = { Text("Título *") },
-                            placeholder = { Text("Ej: Inmersión en Cabo de Palos") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            isError = showError && title.isBlank()
-                        )
-
-                        OutlinedTextField(
-                            value = location,
-                            onValueChange = { location = it },
-                            label = { Text("Lugar *") },
-                            placeholder = { Text("Ej: Murcia, España") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            isError = showError && location.isBlank()
-                        )
-
-                        ExposedDropdownMenuBox(
-                            expanded = diveTypeExpanded,
-                            onExpandedChange = {
-                                diveTypeExpanded = !diveTypeExpanded
-                            }
-                        ) {
-                            OutlinedTextField(
-                                value = diveType,
-                                onValueChange = {},
-                                readOnly = true,
-                                label = { Text("Tipo de inmersión") },
-                                placeholder = { Text("Selecciona un tipo") },
-                                modifier = Modifier
-                                    .menuAnchor()
-                                    .fillMaxWidth(),
-                                trailingIcon = {
-                                    ExposedDropdownMenuDefaults.TrailingIcon(
-                                        expanded = diveTypeExpanded
-                                    )
-                                }
-                            )
-
-                            ExposedDropdownMenu(
-                                expanded = diveTypeExpanded,
-                                onDismissRequest = {
-                                    diveTypeExpanded = false
-                                }
-                            ) {
-                                diveTypes.forEach { type ->
-                                    DropdownMenuItem(
-                                        text = { Text(type) },
-                                        onClick = {
-                                            diveType = type
-                                            diveTypeExpanded = false
-                                        }
-                                    )
-                                }
-                            }
-                        }
-
-                        OutlinedTextField(
-                            value = date,
-                            onValueChange = {},
-                            label = { Text("Fecha *") },
-                            placeholder = { Text("Selecciona una fecha") },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    showDatePicker = true
-                                },
-                            singleLine = true,
-                            readOnly = true,
-                            isError = showError && !isDateValid,
-                            trailingIcon = {
-                                IconButton(
-                                    onClick = {
-                                        showDatePicker = true
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.CalendarMonth,
-                                        contentDescription = "Seleccionar fecha"
-                                    )
-                                }
-                            }
-                        )
-
-                        OutlinedTextField(
-                            value = depth,
-                            onValueChange = { value ->
-                                depth = value.filter { it.isDigit() || it == '.' }
-                            },
-                            label = { Text("Profundidad máxima *") },
-                            placeholder = { Text("Ej: 28") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            isError = showError && !isDepthValid,
-                            suffix = { Text("m") },
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Decimal
-                            )
-                        )
-
-                        OutlinedTextField(
-                            value = duration,
-                            onValueChange = { value ->
-                                duration = value.filter { it.isDigit() }
-                            },
-                            label = { Text("Duración *") },
-                            placeholder = { Text("Ej: 45") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            isError = showError && !isDurationValid,
-                            suffix = { Text("min") },
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Number
-                            )
-                        )
-
-                        OutlinedTextField(
-                            value = temperature,
-                            onValueChange = { value ->
-                                temperature = value.filter { it.isDigit() || it == '.' }
-                            },
-                            label = { Text("Temperatura del agua") },
-                            placeholder = { Text("Ej: 21") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            suffix = { Text("ºC") },
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Decimal
-                            )
-                        )
-
-                        ExposedDropdownMenuBox(
-                            expanded = visibilityExpanded,
-                            onExpandedChange = {
-                                visibilityExpanded = !visibilityExpanded
-                            }
-                        ) {
-                            OutlinedTextField(
-                                value = visibility,
-                                onValueChange = {},
-                                readOnly = true,
-                                label = { Text("Visibilidad") },
-                                placeholder = { Text("Selecciona la visibilidad") },
-                                modifier = Modifier
-                                    .menuAnchor()
-                                    .fillMaxWidth(),
-                                trailingIcon = {
-                                    ExposedDropdownMenuDefaults.TrailingIcon(
-                                        expanded = visibilityExpanded
-                                    )
-                                }
-                            )
-
-                            ExposedDropdownMenu(
-                                expanded = visibilityExpanded,
-                                onDismissRequest = {
-                                    visibilityExpanded = false
-                                }
-                            ) {
-                                visibilityOptions.forEach { option ->
-                                    DropdownMenuItem(
-                                        text = { Text(option) },
-                                        onClick = {
-                                            visibility = option
-                                            visibilityExpanded = false
-                                        }
-                                    )
-                                }
-                            }
-                        }
-
-                        OutlinedTextField(
-                            value = notes,
-                            onValueChange = { notes = it },
-                            label = { Text("Notas") },
-                            placeholder = { Text("Escribe aquí tus recuerdos, fauna vista, sensaciones...") },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(140.dp),
-                            maxLines = 6
-                        )
-                    }
-                }
-            }
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
                     Text(
-                        text = "Fotos",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        text = "Datos de la inmersión",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = DiveFoam
                     )
 
-                    Button(
+                    Text(
+                        text = "Completa la información principal de tu salida bajo el agua.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = DiveFoam.copy(alpha = 0.82f)
+                    )
+
+                    AnimatedVisibility(
+                        visible = true,
+                        enter = fadeIn() + slideInVertically(
+                            initialOffsetY = { it / 4 }
+                        )
+                    ) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            DiveSectionCard(
+                                title = "Información de la inmersión"
+                            ) {
+                                DiveFormTextField(
+                                    value = title,
+                                    onValueChange = { title = it },
+                                    label = "Título *",
+                                    placeholder = "Ej: Inmersión en Cabo de Palos",
+                                    isError = showError && title.isBlank()
+                                )
+
+                                DiveFormTextField(
+                                    value = location,
+                                    onValueChange = { location = it },
+                                    label = "Lugar *",
+                                    placeholder = "Ej: Murcia, España",
+                                    isError = showError && location.isBlank()
+                                )
+
+                                DiveDropdownField(
+                                    value = diveType,
+                                    label = "Tipo de inmersión",
+                                    placeholder = "Selecciona un tipo",
+                                    expanded = diveTypeExpanded,
+                                    options = diveTypes,
+                                    onExpandedChange = {
+                                        diveTypeExpanded = !diveTypeExpanded
+                                    },
+                                    onDismissRequest = {
+                                        diveTypeExpanded = false
+                                    },
+                                    onOptionSelected = { type ->
+                                        diveType = type
+                                        diveTypeExpanded = false
+                                    }
+                                )
+
+                                DiveFormTextField(
+                                    value = date,
+                                    onValueChange = {},
+                                    label = "Fecha *",
+                                    placeholder = "Selecciona una fecha",
+                                    readOnly = true,
+                                    isError = showError && !isDateValid,
+                                    modifier = Modifier.clickable {
+                                        showDatePicker = true
+                                    },
+                                    trailingIcon = {
+                                        IconButton(
+                                            onClick = {
+                                                showDatePicker = true
+                                            }
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.CalendarMonth,
+                                                contentDescription = "Seleccionar fecha",
+                                                tint = DiveFoam
+                                            )
+                                        }
+                                    }
+                                )
+                            }
+
+                            DiveSectionCard(
+                                title = "Parámetros de inmersión"
+                            ) {
+                                DiveFormTextField(
+                                    value = depth,
+                                    onValueChange = { value ->
+                                        depth = value.filter { it.isDigit() || it == '.' }
+                                    },
+                                    label = "Profundidad máxima *",
+                                    placeholder = "Ej: 28",
+                                    isError = showError && !isDepthValid,
+                                    suffix = { Text("m", color = DiveFoam) },
+                                    keyboardOptions = KeyboardOptions(
+                                        keyboardType = KeyboardType.Decimal
+                                    )
+                                )
+
+                                DiveFormTextField(
+                                    value = duration,
+                                    onValueChange = { value ->
+                                        duration = value.filter { it.isDigit() }
+                                    },
+                                    label = "Duración *",
+                                    placeholder = "Ej: 45",
+                                    isError = showError && !isDurationValid,
+                                    suffix = { Text("min", color = DiveFoam) },
+                                    keyboardOptions = KeyboardOptions(
+                                        keyboardType = KeyboardType.Number
+                                    )
+                                )
+
+                                DiveFormTextField(
+                                    value = temperature,
+                                    onValueChange = { value ->
+                                        temperature = value.filter { it.isDigit() || it == '.' }
+                                    },
+                                    label = "Temperatura del agua",
+                                    placeholder = "Ej: 21",
+                                    suffix = { Text("ºC", color = DiveFoam) },
+                                    keyboardOptions = KeyboardOptions(
+                                        keyboardType = KeyboardType.Decimal
+                                    )
+                                )
+
+                                DiveDropdownField(
+                                    value = visibility,
+                                    label = "Visibilidad",
+                                    placeholder = "Selecciona la visibilidad",
+                                    expanded = visibilityExpanded,
+                                    options = visibilityOptions,
+                                    onExpandedChange = {
+                                        visibilityExpanded = !visibilityExpanded
+                                    },
+                                    onDismissRequest = {
+                                        visibilityExpanded = false
+                                    },
+                                    onOptionSelected = { option ->
+                                        visibility = option
+                                        visibilityExpanded = false
+                                    }
+                                )
+                            }
+
+                            DiveSectionCard(
+                                title = "Notas"
+                            ) {
+                                DiveFormTextField(
+                                    value = notes,
+                                    onValueChange = { notes = it },
+                                    label = "Notas",
+                                    placeholder = "Escribe recuerdos, fauna vista o sensaciones...",
+                                    singleLine = false,
+                                    modifier = Modifier.height(140.dp)
+                                )
+                            }
+                        }
+                    }
+
+                DiveSectionCard(
+                    title = "Fotos de la inmersión"
+                ) {
+                    DiveButton(
+                        text = "Añadir fotos",
                         onClick = {
                             photoPickerLauncher.launch(
                                 PickVisualMediaRequest(PickVisualMedia.ImageOnly)
                             )
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Seleccionar fotos")
-                    }
+                        }
+                    )
 
                     if (selectedPhotos.isNotEmpty()) {
                         LazyRow(
@@ -456,82 +418,84 @@ fun AddDiveScreen(
                                 items = selectedPhotos,
                                 key = { it.toString() }
                             ) { uri ->
-                                Image(
-                                    painter = rememberAsyncImagePainter(uri),
-                                    contentDescription = "Foto seleccionada",
-                                    modifier = Modifier.size(90.dp)
-                                )
+                                Box(
+                                    modifier = Modifier.size(104.dp)
+                                ) {
+                                    Image(
+                                        painter = rememberAsyncImagePainter(uri),
+                                        contentDescription = "Foto seleccionada",
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .size(104.dp)
+                                            .clip(RoundedCornerShape(18.dp))
+                                    )
+
+                                    IconButton(
+                                        onClick = {
+                                            selectedPhotos = selectedPhotos.filterNot { it == uri }
+                                        },
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .background(
+                                                color = DiveDeepBlue.copy(alpha = 0.82f),
+                                                shape = CircleShape
+                                            )
+                                            .size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Delete,
+                                            contentDescription = "Eliminar foto",
+                                            tint = DiveFoam,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
                             }
                         }
                     } else {
                         Text(
                             text = "Aún no has añadido fotos.",
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodySmall,
+                            color = DiveFoam.copy(alpha = 0.75f)
                         )
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-            if (showError && !isFormValid) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    if (title.isBlank()) {
-                        Text("El título es obligatorio.", color = MaterialTheme.colorScheme.error)
-                    }
-
-                    if (location.isBlank()) {
-                        Text("El lugar es obligatorio.", color = MaterialTheme.colorScheme.error)
-                    }
-
-                    if (!isDateValid) {
-                        Text("Selecciona una fecha válida.", color = MaterialTheme.colorScheme.error)
-                    }
-
-                    if (!isDepthValid) {
-                        Text("La profundidad debe estar entre 0 y 100 metros.", color = MaterialTheme.colorScheme.error)
-                    }
-
-                    if (!isDurationValid) {
-                        Text("La duración debe ser mayor que 0 minutos.", color = MaterialTheme.colorScheme.error)
-                    }
+                if (showError && !isFormValid) {
+                    DiveValidationErrorCard(
+                        errors = validationErrors
+                    )
                 }
-            }
 
-            Button(
-                onClick = {
-                    if (isFormValid) {
-                        onSaveDive(
-                            diveToEdit?.id ?: 0,
-                            title,
-                            location,
-                            diveType,
-                            date,
-                            "$depth m",
-                            "$duration min",
-                            if (temperature.isBlank()) "" else "$temperature ºC",
-                            visibility,
-                            notes,
-                            selectedPhotos.map { it.toString() }
-                        )
+                DiveButton(
+                    text = if (diveToEdit == null) {
+                        "Guardar inmersión"
                     } else {
-                        showError = true
+                        "Actualizar inmersión"
+                    },
+                    onClick = {
+                        if (isFormValid) {
+                            onSaveDive(
+                                diveToEdit?.id ?: 0,
+                                title,
+                                location,
+                                diveType,
+                                date,
+                                "$depth m",
+                                "$duration min",
+                                if (temperature.isBlank()) "" else "$temperature ºC",
+                                visibility,
+                                notes,
+                                selectedPhotos.map { it.toString() }
+                            )
+                        } else {
+                            showError = true
+                        }
                     }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(14.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Save,
-                    contentDescription = "Guardar"
                 )
-
-                Spacer(modifier = Modifier.padding(4.dp))
-
-                Text(text = "Guardar inmersión")
+                }
             }
-        }
     }
 }
