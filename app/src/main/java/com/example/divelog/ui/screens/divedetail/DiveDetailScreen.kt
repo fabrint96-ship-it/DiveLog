@@ -54,6 +54,21 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.background
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.ui.graphics.Brush
+import com.example.divelog.ui.components.navigation.DiveDetailHeader
+import com.example.divelog.ui.theme.DiveDeepBlue
+import com.example.divelog.ui.theme.DiveOceanBlue
+import com.example.divelog.ui.theme.DiveTeal
+import com.example.divelog.ui.components.cards.DiveSectionCard
+import com.example.divelog.ui.theme.DiveFoam
+import androidx.compose.foundation.shape.CircleShape
+import com.example.divelog.ui.theme.DiveFoam
+import com.example.divelog.ui.theme.DiveDeepBlue
+import com.example.divelog.ui.theme.DiveOceanBlue
+import com.example.divelog.ui.theme.DiveTeal
+import com.example.divelog.ui.components.buttons.DiveButton
+import com.example.divelog.ui.components.buttons.DiveOutlinedButton
+import com.example.divelog.ui.components.dialogs.DiveConfirmDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,22 +86,12 @@ fun DiveDetailScreen(
     var galleryItemToDelete by remember { mutableStateOf<GalleryItem?>(null) }
 
     Scaffold(
+        containerColor = DiveDeepBlue,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Detalle de inmersión",
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Volver"
-                        )
-                    }
-                }
+            DiveDetailHeader(
+                title = dive?.title ?: "Detalle de inmersión",
+                location = dive?.location ?: "",
+                onBackClick = onBackClick
             )
         }
     ) { paddingValues ->
@@ -101,45 +106,43 @@ fun DiveDetailScreen(
                 Text("No se ha encontrado la inmersión.")
             }
         } else {
-            val galleryItems = dive.photos.map {
+            val photoItems = dive.photos.map {
                 GalleryItem(
                     uri = it,
                     type = GalleryItemType.PHOTO
                 )
-            } + dive.drawings.map {
+            }
+
+            val drawingItems = dive.drawings.map {
                 GalleryItem(
                     uri = it,
                     type = GalleryItemType.DRAWING
                 )
             }
 
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                DiveDeepBlue,
+                                DiveOceanBlue,
+                                DiveTeal.copy(alpha = 0.85f)
+                            )
+                        )
+                    )
                     .padding(paddingValues)
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Text(
-                    text = dive.title,
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Text(
-                    text = dive.location,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.75f)
-                )
-
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    DiveSectionCard(
+                        title = "Información de la inmersión"
                     ) {
                         DetailRow("Fecha", dive.date)
                         DetailRow("Tipo de inmersión", dive.diveType)
@@ -148,276 +151,95 @@ fun DiveDetailScreen(
                         DetailRow("Temperatura del agua", dive.waterTemperature)
                         DetailRow("Visibilidad", dive.visibility)
                     }
-                }
 
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
+                    DiveSectionCard(
+                        title = "Notas"
                     ) {
-                        Text(
-                            text = "Notas",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
                         Text(
                             text = dive.notes.ifBlank { "Sin notas añadidas." },
-                            style = MaterialTheme.typography.bodyMedium
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = DiveFoam.copy(alpha = 0.85f)
                         )
                     }
-                }
 
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text(
-                            text = "Galería",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                    GallerySection(
+                        title = "Fotos",
+                        emptyText = "No hay fotos guardadas.",
+                        items = photoItems,
+                        onPhotoClick = onPhotoClick,
+                        onDeleteClick = { item ->
+                            galleryItemToDelete = item
+                        }
+                    )
+
+                    GallerySection(
+                        title = "Dibujos",
+                        emptyText = "No hay dibujos guardados.",
+                        items = drawingItems,
+                        onPhotoClick = onPhotoClick,
+                        onDeleteClick = { item ->
+                            galleryItemToDelete = item
+                        }
+                    )
+
+                    DiveButton(
+                        text = "Abrir dibujos",
+                        onClick = onDrawingClick
+                    )
+
+                    DiveButton(
+                        text = "Editar inmersión",
+                        onClick = {
+                            onEditClick(dive.id)
+                        }
+                    )
+
+                    DiveButton(
+                        text = "Compartir inmersión",
+                        onClick = {
+                            onShareClick(dive)
+                        }
+                    )
+
+                    DiveOutlinedButton(
+                        text = "Eliminar inmersión",
+                        onClick = {
+                            showDeleteDialog = true
+                        }
+                    )
+
+                    if (showDeleteDialog) {
+                        DiveConfirmDialog(
+                            title = "Eliminar inmersión",
+                            message = "¿Seguro que quieres eliminar esta inmersión? Esta acción no se puede deshacer.",
+                            confirmText = "Eliminar",
+                            onConfirm = {
+                                onDeleteClick(dive)
+                                showDeleteDialog = false
+                            },
+                            onDismiss = {
+                                showDeleteDialog = false
+                            }
                         )
-
-                        if (galleryItems.isNotEmpty()) {
-                            LazyRow(
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                items(galleryItems) { item ->
-                                    Box {
-                                        Image(
-                                            painter = rememberAsyncImagePainter(item.uri),
-                                            contentDescription = "Elemento de galería",
-                                            contentScale = ContentScale.Crop,
-                                            modifier = Modifier
-                                                .size(110.dp)
-                                                .clip(RoundedCornerShape(16.dp))
-                                                .clickable {
-                                                    onPhotoClick(item.uri)
-                                                }
-                                        )
-
-                                        AssistChip(
-                                            onClick = {},
-                                            label = {
-                                                Text(
-                                                    text = if (item.type == GalleryItemType.PHOTO) {
-                                                        "Foto"
-                                                    } else {
-                                                        "Dibujo"
-                                                    }
-                                                )
-                                            },
-                                            modifier = Modifier
-                                                .align(Alignment.BottomStart)
-                                                .padding(6.dp)
-                                        )
-
-                                        IconButton(
-                                            onClick = {
-                                                galleryItemToDelete = item
-                                            },
-                                            modifier = Modifier
-                                                .align(Alignment.TopEnd)
-                                                .padding(2.dp)
-                                                .background(
-                                                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f),
-                                                    shape = RoundedCornerShape(50)
-                                                )
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Delete,
-                                                contentDescription = "Eliminar elemento",
-                                                tint = MaterialTheme.colorScheme.error
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            Text(
-                                text = "No hay fotos ni dibujos guardados.",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
                     }
-                }
-
-                Button(
-                    onClick = onDrawingClick,
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(14.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Brush,
-                        contentDescription = "Dibujos"
-                    )
-
-                    Spacer(modifier = Modifier.padding(4.dp))
-
-                    Text("Abrir dibujos")
-                }
-
-                Button(
-                    onClick = {
-                        onEditClick(dive.id)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(14.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "Editar"
-                    )
-
-                    Spacer(modifier = Modifier.padding(4.dp))
-
-                    Text("Editar inmersión")
-                }
-
-                Button(
-                    onClick = {
-                        onShareClick(dive)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(14.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Share,
-                        contentDescription = "Compartir"
-                    )
-
-                    Spacer(modifier = Modifier.padding(4.dp))
-
-                    Text("Compartir inmersión")
-                }
-
-                OutlinedButton(
-                    onClick = {
-                        showDeleteDialog = true
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateContentSize(),
-                    contentPadding = PaddingValues(14.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Eliminar"
-                    )
-
-                    Spacer(modifier = Modifier.padding(4.dp))
-
-                    Text("Eliminar inmersión")
-                }
-
-                if (showDeleteDialog) {
-                    AlertDialog(
-                        onDismissRequest = {
-                            showDeleteDialog = false
-                        },
-                        title = {
-                            Text("Eliminar inmersión")
-                        },
-                        text = {
-                            Text("¿Seguro que quieres eliminar esta inmersión? Esta acción no se puede deshacer.")
-                        },
-                        confirmButton = {
-                            TextButton(
-                                onClick = {
-                                    onDeleteClick(dive)
-                                    showDeleteDialog = false
-                                }
-                            ) {
-                                Text("Eliminar")
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(
-                                onClick = {
-                                    showDeleteDialog = false
-                                }
-                            ) {
-                                Text("Cancelar")
-                            }
-                        }
-                    )
-                }
-
-                if (galleryItemToDelete != null) {
-                    AlertDialog(
-                        onDismissRequest = {
-                            galleryItemToDelete = null
-                        },
-                        title = {
-                            Text("Eliminar elemento")
-                        },
-                        text = {
-                            Text("¿Seguro que quieres eliminar este elemento de la galería?")
-                        },
-                        confirmButton = {
-                            TextButton(
-                                onClick = {
-                                    galleryItemToDelete?.let { item ->
-                                        onDeleteGalleryItem(item)
-                                    }
-                                    galleryItemToDelete = null
-                                }
-                            ) {
-                                Text("Eliminar")
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(
-                                onClick = {
-                                    galleryItemToDelete = null
-                                }
-                            ) {
-                                Text("Cancelar")
-                            }
-                        }
-                    )
                 }
             }
 
+
+
             if (galleryItemToDelete != null) {
-                AlertDialog(
-                    onDismissRequest = {
+                DiveConfirmDialog(
+                    title = "Eliminar elemento",
+                    message = "¿Seguro que quieres eliminar este elemento de la galería?",
+                    confirmText = "Eliminar",
+                    onConfirm = {
+                        galleryItemToDelete?.let { item ->
+                            onDeleteGalleryItem(item)
+                        }
                         galleryItemToDelete = null
                     },
-                    title = {
-                        Text("Eliminar elemento")
-                    },
-                    text = {
-                        Text("¿Seguro que quieres eliminar este elemento de la galería?")
-                    },
-                    confirmButton = {
-                        TextButton(
-                            onClick = {
-                                galleryItemToDelete?.let { item ->
-                                    onDeleteGalleryItem(item)
-                                }
-                                galleryItemToDelete = null
-                            }
-                        ) {
-                            Text("Eliminar")
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(
-                            onClick = {
-                                galleryItemToDelete = null
-                            }
-                        ) {
-                            Text("Cancelar")
-                        }
+                    onDismiss = {
+                        galleryItemToDelete = null
                     }
                 )
             }
@@ -434,13 +256,77 @@ fun DetailRow(
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
+            color = DiveFoam.copy(alpha = 0.62f)
         )
 
         Text(
             text = value.ifBlank { "No indicado" },
             style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
+            color = DiveFoam
         )
+    }
+}
+
+@Composable
+fun GallerySection(
+    title: String,
+    emptyText: String,
+    items: List<GalleryItem>,
+    onPhotoClick: (String) -> Unit,
+    onDeleteClick: (GalleryItem) -> Unit
+) {
+    DiveSectionCard(
+        title = title
+    ) {
+        if (items.isNotEmpty()) {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                items(items) { item ->
+                    Box(
+                        modifier = Modifier.size(112.dp)
+                    ) {
+                        Image(
+                            painter = rememberAsyncImagePainter(item.uri),
+                            contentDescription = title,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(112.dp)
+                                .clip(RoundedCornerShape(18.dp))
+                                .clickable {
+                                    onPhotoClick(item.uri)
+                                }
+                        )
+
+                        IconButton(
+                            onClick = {
+                                onDeleteClick(item)
+                            },
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .background(
+                                    color = DiveDeepBlue.copy(alpha = 0.82f),
+                                    shape = CircleShape
+                                )
+                                .size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Eliminar elemento",
+                                tint = DiveFoam,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        } else {
+            Text(
+                text = emptyText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = DiveFoam.copy(alpha = 0.75f)
+            )
+        }
     }
 }
