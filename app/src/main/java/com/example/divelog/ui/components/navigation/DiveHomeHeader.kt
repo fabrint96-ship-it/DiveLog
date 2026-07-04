@@ -29,6 +29,7 @@ import com.example.divelog.ui.theme.DiveTeal
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import com.example.divelog.ui.theme.Dimens
 
 @Composable
 fun DiveHomeHeader(
@@ -54,15 +55,15 @@ fun DiveHomeHeader(
                     )
                 ),
                 shape = RoundedCornerShape(
-                    bottomStart = 28.dp,
-                    bottomEnd = 28.dp
+                    bottomStart = Dimens.RadiusXL,
+                    bottomEnd = Dimens.RadiusXL
                 )
             )
             .padding(
                 start = 20.dp,
                 end = 20.dp,
-                top = 28.dp,
-                bottom = 20.dp
+                top = Dimens.HeaderTopPadding,
+                bottom = Dimens.HeaderBottomPadding
             )
     ) {
         if (isSearchMode) {

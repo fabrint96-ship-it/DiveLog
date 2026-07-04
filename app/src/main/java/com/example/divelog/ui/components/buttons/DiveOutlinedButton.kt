@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.divelog.ui.theme.DiveFoam
 import com.example.divelog.ui.theme.DiveTeal
+import com.example.divelog.ui.theme.Dimens
 
 @Composable
 fun DiveOutlinedButton(
@@ -27,8 +28,8 @@ fun DiveOutlinedButton(
         enabled = enabled,
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp),
-        shape = RoundedCornerShape(18.dp),
+            .height(Dimens.ButtonHeight),
+        shape = RoundedCornerShape(Dimens.RadiusM),
         border = BorderStroke(
             width = 1.5.dp,
             color = if (enabled) DiveTeal else DiveFoam.copy(alpha = 0.35f)

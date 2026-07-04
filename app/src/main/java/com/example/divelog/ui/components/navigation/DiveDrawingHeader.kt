@@ -9,8 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.ScubaDiving
+import androidx.compose.material.icons.filled.Brush
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -18,7 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Brush as ComposeBrush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.divelog.ui.theme.DiveDeepBlue
@@ -28,15 +27,14 @@ import com.example.divelog.ui.theme.DiveTeal
 import com.example.divelog.ui.theme.Dimens
 
 @Composable
-fun DiveEditorHeader(
-    isEditMode: Boolean,
+fun DiveDrawingHeader(
     onBackClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(
-                brush = Brush.verticalGradient(
+                brush = ComposeBrush.verticalGradient(
                     colors = listOf(
                         DiveDeepBlue,
                         DiveOceanBlue,
@@ -69,29 +67,21 @@ fun DiveEditorHeader(
             }
 
             Icon(
-                imageVector = if (isEditMode) {
-                    Icons.Default.Edit
-                } else {
-                    Icons.Default.ScubaDiving
-                },
+                imageVector = Icons.Default.Brush,
                 contentDescription = null,
                 tint = DiveFoam
             )
 
             Column {
                 Text(
-                    text = if (isEditMode) {
-                        "Editar inmersión"
-                    } else {
-                        "Nueva inmersión"
-                    },
+                    text = "Croquis submarino",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = DiveFoam
                 )
 
                 Text(
-                    text = "Registra los detalles de tu aventura submarina",
+                    text = "Dibuja rutas, fauna o detalles de la inmersión",
                     style = MaterialTheme.typography.bodyMedium,
                     color = DiveFoam.copy(alpha = 0.82f)
                 )

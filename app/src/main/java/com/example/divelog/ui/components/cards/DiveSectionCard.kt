@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.dp
 import com.example.divelog.ui.theme.DiveDeepBlue
 import com.example.divelog.ui.theme.DiveFoam
 import com.example.divelog.ui.theme.DiveOceanBlue
+import com.example.divelog.ui.theme.Dimens
+
 
 @Composable
 fun DiveSectionCard(
@@ -27,7 +29,7 @@ fun DiveSectionCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(Dimens.RadiusXL),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
         colors = CardDefaults.cardColors(
             containerColor = DiveDeepBlue.copy(alpha = 0.92f)
@@ -44,8 +46,8 @@ fun DiveSectionCard(
                         )
                     )
                 )
-                .padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(Dimens.SpaceL),
+            verticalArrangement = Arrangement.spacedBy(Dimens.SpaceM)
         ) {
             Text(
                 text = title,

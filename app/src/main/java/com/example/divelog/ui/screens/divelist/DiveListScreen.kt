@@ -74,6 +74,7 @@ import com.example.divelog.ui.theme.DiveDeepBlue
 import com.example.divelog.ui.theme.DiveOceanBlue
 import com.example.divelog.ui.theme.DiveTeal
 import com.example.divelog.ui.theme.DiveFoam
+import com.example.divelog.ui.theme.DiveAnimations
 
 enum class DiveSortOption(
     val label: String
@@ -286,12 +287,8 @@ fun DiveListScreen(
                             ) { dive ->
                                 AnimatedVisibility(
                                     visible = true,
-                                    enter = fadeIn() + slideInVertically(
-                                        initialOffsetY = { it / 2 }
-                                    ),
-                                    exit = fadeOut() + slideOutVertically(
-                                        targetOffsetY = { -it / 2 }
-                                    )
+                                    enter = DiveAnimations.cardEnter(),
+                                    exit = DiveAnimations.cardExit()
                                 ) {
                                     DiveCard(
                                         dive = dive,

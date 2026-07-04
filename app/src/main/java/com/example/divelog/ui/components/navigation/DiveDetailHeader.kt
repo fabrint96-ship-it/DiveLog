@@ -24,6 +24,7 @@ import com.example.divelog.ui.theme.DiveDeepBlue
 import com.example.divelog.ui.theme.DiveFoam
 import com.example.divelog.ui.theme.DiveOceanBlue
 import com.example.divelog.ui.theme.DiveTeal
+import com.example.divelog.ui.theme.Dimens
 
 @Composable
 fun DiveDetailHeader(
@@ -43,15 +44,15 @@ fun DiveDetailHeader(
                     )
                 ),
                 shape = RoundedCornerShape(
-                    bottomStart = 28.dp,
-                    bottomEnd = 28.dp
+                    bottomStart = Dimens.RadiusXL,
+                    bottomEnd = Dimens.RadiusXL
                 )
             )
             .padding(
                 start = 12.dp,
                 end = 20.dp,
-                top = 28.dp,
-                bottom = 22.dp
+                top = Dimens.HeaderTopPadding,
+                bottom = Dimens.HeaderBottomPadding
             )
     ) {
         Row(
