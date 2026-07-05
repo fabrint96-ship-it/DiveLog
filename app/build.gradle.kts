@@ -86,4 +86,6 @@ dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 
     implementation("androidx.core:core-splashscreen:1.0.1")
+
+    implementation("org.maplibre.gl:android-sdk:13.3.1")
 }

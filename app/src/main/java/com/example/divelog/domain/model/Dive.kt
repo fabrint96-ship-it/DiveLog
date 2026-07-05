@@ -20,5 +20,7 @@ data class Dive(
     val photos: List<String> = emptyList(),
     val drawings: List<String> = emptyList(),
     val cloudId: Long? = null,
-    val syncId: String = java.util.UUID.randomUUID().toString()
+    val syncId: String = java.util.UUID.randomUUID().toString(),
+    val latitude: Double? = null,
+    val longitude: Double? = null
 )
