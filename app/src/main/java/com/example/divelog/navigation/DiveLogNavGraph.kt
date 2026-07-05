@@ -54,6 +54,12 @@ import com.example.divelog.ui.theme.DiveTeal
 import com.example.divelog.data.DiveMediaNoteRepository
 import com.example.divelog.viewmodel.DiveMediaNoteViewModel
 import com.example.divelog.viewmodel.DiveMediaNoteViewModelFactory
+import com.example.divelog.ui.screens.locationpicker.LocationPickerScreen
+import com.example.divelog.data.location.ReverseGeocoder
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.mutableStateOf
+import com.example.divelog.data.location.MapIntentHelper
 
 @Composable
 fun DiveLogNavGraph() {
@@ -109,6 +115,8 @@ fun DiveLogNavGraph() {
             }
         }
     }
+
+    val scope = rememberCoroutineScope()
 
     NavHost(
         navController = navController,
@@ -178,10 +186,32 @@ fun DiveLogNavGraph() {
         }
 
         composable(Routes.ADD_DIVE) {
+            val backStackEntry = navController.currentBackStackEntry
+
+            val pickedLocation by backStackEntry
+                ?.savedStateHandle
+                ?.getStateFlow<String?>("picked_location", null)
+                ?.collectAsState()
+                ?: remember { mutableStateOf(null) }
+
+            val pickedLatitude by backStackEntry
+                ?.savedStateHandle
+                ?.getStateFlow<Double?>("picked_lat", null)
+                ?.collectAsState()
+                ?: remember { mutableStateOf(null) }
+
+            val pickedLongitude by backStackEntry
+                ?.savedStateHandle
+                ?.getStateFlow<Double?>("picked_lng", null)
+                ?.collectAsState()
+                ?: remember { mutableStateOf(null) }
+
             AddDiveScreen(
                 diveToEdit = null,
-                onSaveDive = { _, title, location, diveType, date, depth, duration, temperature, visibility, notes, photos ->
-
+                pickedLocation = pickedLocation,
+                pickedLatitude = pickedLatitude,
+                pickedLongitude = pickedLongitude,
+                onSaveDive = { _, title, location, diveType, date, depth, duration, temperature, visibility, notes, photos, latitude, longitude ->
                     val savedPhotos = ImageStorageHelper.saveImagesToInternalStorage(
                         context = context,
                         uris = photos.map { Uri.parse(it) }
@@ -199,7 +229,9 @@ fun DiveLogNavGraph() {
                             waterTemperature = temperature,
                             visibility = visibility,
                             notes = notes,
-                            photos = savedPhotos
+                            photos = savedPhotos,
+                            latitude = latitude,
+                            longitude = longitude
                         )
                     )
 
@@ -211,6 +243,9 @@ fun DiveLogNavGraph() {
                 },
                 onBackClick = {
                     navController.popBackStack()
+                },
+                onPickLocationClick = {
+                    navController.navigate(Routes.LOCATION_PICKER)
                 }
             )
         }
@@ -222,10 +257,32 @@ fun DiveLogNavGraph() {
 
             val selectedDive = dives.find { it.id == diveId }
 
+            val backStackEntry = navController.currentBackStackEntry
+
+            val pickedLocation by backStackEntry
+                ?.savedStateHandle
+                ?.getStateFlow<String?>("picked_location", null)
+                ?.collectAsState()
+                ?: remember { mutableStateOf(null) }
+
+            val pickedLatitude by backStackEntry
+                ?.savedStateHandle
+                ?.getStateFlow<Double?>("picked_lat", null)
+                ?.collectAsState()
+                ?: remember { mutableStateOf(null) }
+
+            val pickedLongitude by backStackEntry
+                ?.savedStateHandle
+                ?.getStateFlow<Double?>("picked_lng", null)
+                ?.collectAsState()
+                ?: remember { mutableStateOf(null) }
+
             AddDiveScreen(
                 diveToEdit = selectedDive,
-                onSaveDive = { _, title, location, diveType, date, depth, duration, temperature, visibility, notes, photos ->
-
+                pickedLocation = pickedLocation,
+                pickedLatitude = pickedLatitude,
+                pickedLongitude = pickedLongitude,
+                onSaveDive = { _, title, location, diveType, date, depth, duration, temperature, visibility, notes, photos, latitude, longitude ->
                     selectedDive?.let { dive ->
                         val existingPhotos = dive.photos
 
@@ -254,7 +311,9 @@ fun DiveLogNavGraph() {
                                 photos = finalPhotos.distinct(),
                                 drawings = dive.drawings,
                                 cloudId = dive.cloudId,
-                                syncId = dive.syncId
+                                syncId = dive.syncId,
+                                latitude = latitude,
+                                longitude = longitude
                             )
                         )
                     }
@@ -267,6 +326,9 @@ fun DiveLogNavGraph() {
                 },
                 onBackClick = {
                     navController.popBackStack()
+                },
+                onPickLocationClick = {
+                    navController.navigate(Routes.LOCATION_PICKER)
                 }
             )
         }
@@ -329,7 +391,15 @@ fun DiveLogNavGraph() {
                 onDeleteClick = { dive ->
                     diveViewModel.deleteDive(dive)
                     navController.popBackStack()
-                }
+                },
+                onOpenMapClick = { lat, lng, label ->
+                    MapIntentHelper.openLocation(
+                        context = context,
+                        latitude = lat,
+                        longitude = lng,
+                        label = label
+                    )
+                },
             )
         }
 
@@ -398,6 +468,39 @@ fun DiveLogNavGraph() {
                 },
                 onBackClick = {
                     navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Routes.LOCATION_PICKER) {
+            LocationPickerScreen(
+                onBackClick = {
+                    navController.popBackStack()
+                },
+                onLocationSelected = { lat, lng ->
+
+                    val previousEntry = navController.previousBackStackEntry
+
+                    previousEntry?.savedStateHandle?.set("picked_lat", lat)
+                    previousEntry?.savedStateHandle?.set("picked_lng", lng)
+                    previousEntry?.savedStateHandle?.set(
+                        "picked_location",
+                        "Lat %.5f, Lng %.5f".format(lat, lng)
+                    )
+
+                    navController.popBackStack()
+
+                    scope.launch {
+                        val locationName = ReverseGeocoder.getLocationName(
+                            context = context,
+                            latitude = lat,
+                            longitude = lng
+                        )
+
+                        if (locationName.isNotBlank()) {
+                            previousEntry?.savedStateHandle?.set("picked_location", locationName)
+                        }
+                    }
                 }
             )
         }

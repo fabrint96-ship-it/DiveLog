@@ -17,7 +17,9 @@ fun Dive.toSupabaseDto(userId: String): SupabaseDiveDto {
         diveType = diveType,
         photos = photos,
         drawings = drawings,
-        syncId = syncId
+        syncId = syncId,
+        latitude = latitude,
+        longitude = longitude,
     )
 }
 
@@ -34,6 +36,8 @@ fun SupabaseDiveDto.toDive(): Dive {
         diveType = diveType ?: "",
         photos = photos ?: emptyList(),
         drawings = drawings ?: emptyList(),
-        syncId = syncId
+        syncId = syncId,
+        latitude = latitude,
+        longitude = longitude,
     )
 }

@@ -41,6 +41,8 @@ import com.example.divelog.ui.theme.DiveDeepBlue
 import com.example.divelog.ui.theme.DiveFoam
 import com.example.divelog.ui.theme.DiveOceanBlue
 import com.example.divelog.ui.theme.DiveTeal
+import com.example.divelog.ui.components.maps.MapLibreView
+import com.example.divelog.ui.theme.Dimens
 
 @Composable
 fun DiveCard(
@@ -142,36 +144,52 @@ fun DiveCard(
 private fun DiveCardImage(
     dive: Dive
 ) {
-    if (dive.photos.isNotEmpty()) {
-        Image(
-            painter = rememberAsyncImagePainter(dive.photos.first()),
-            contentDescription = "Foto de ${dive.title}",
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(180.dp)
-        )
-    } else {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(180.dp)
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            DiveOceanBlue,
-                            DiveTeal
-                        )
-                    )
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Photo,
-                contentDescription = null,
-                tint = DiveFoam,
-                modifier = Modifier.size(52.dp)
+    when {
+        dive.photos.isNotEmpty() -> {
+            Image(
+                painter = rememberAsyncImagePainter(dive.photos.first()),
+                contentDescription = "Foto de ${dive.title}",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(Dimens.CardImageHeight)
             )
+        }
+
+        dive.latitude != null && dive.longitude != null -> {
+            MapLibreView(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(Dimens.CardImageHeight),
+                latitude = dive.latitude,
+                longitude = dive.longitude,
+                zoom = 11.0,
+                interactive = false
+            )
+        }
+
+        else -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(Dimens.CardImageHeight)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                DiveOceanBlue,
+                                DiveTeal
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Photo,
+                    contentDescription = null,
+                    tint = DiveFoam,
+                    modifier = Modifier.size(52.dp)
+                )
+            }
         }
     }
 }

@@ -69,6 +69,7 @@ import com.example.divelog.ui.theme.DiveTeal
 import com.example.divelog.ui.components.buttons.DiveButton
 import com.example.divelog.ui.components.buttons.DiveOutlinedButton
 import com.example.divelog.ui.components.dialogs.DiveConfirmDialog
+import com.example.divelog.ui.components.maps.DiveMiniMapCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,7 +81,8 @@ fun DiveDetailScreen(
     onPhotoClick: (String) -> Unit,
     onDeleteGalleryItem: (GalleryItem) -> Unit,
     onShareClick: (Dive) -> Unit,
-    onDeleteClick: (Dive) -> Unit
+    onDeleteClick: (Dive) -> Unit,
+    onOpenMapClick: (Double, Double, String) -> Unit,
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
     var galleryItemToDelete by remember { mutableStateOf<GalleryItem?>(null) }
@@ -151,6 +153,26 @@ fun DiveDetailScreen(
                         DetailRow("Temperatura del agua", dive.waterTemperature)
                         DetailRow("Visibilidad", dive.visibility)
                     }
+
+                    DiveMiniMapCard(
+                        latitude = dive.latitude,
+                        longitude = dive.longitude,
+                        locationName = dive.location,
+                        interactive = true
+                    )
+
+                    DiveButton(
+                        text = "Abrir en mapas",
+                        onClick = {
+                            if (dive.latitude != null && dive.longitude != null) {
+                                onOpenMapClick(
+                                    dive.latitude,
+                                    dive.longitude,
+                                    dive.location
+                                )
+                            }
+                        }
+                    )
 
                     DiveSectionCard(
                         title = "Notas"

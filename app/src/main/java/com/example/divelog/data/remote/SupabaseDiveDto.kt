@@ -38,4 +38,7 @@ data class SupabaseDiveDto(
     @SerialName("sync_id")
     val syncId: String = "",
 
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+
 )

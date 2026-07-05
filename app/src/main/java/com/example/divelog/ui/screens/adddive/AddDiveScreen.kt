@@ -77,11 +77,19 @@ import com.example.divelog.ui.theme.DiveDeepBlue
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.example.divelog.ui.components.common.DiveValidationErrorCard
 import com.example.divelog.ui.theme.DiveAnimations
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.LaunchedEffect
+import com.example.divelog.ui.components.maps.DiveMiniMapCard
+import androidx.compose.runtime.saveable.rememberSaveable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddDiveScreen(
     diveToEdit: Dive? = null,
+    pickedLocation: String? = null,
+    pickedLatitude: Double? = null,
+    pickedLongitude: Double? = null,
     onSaveDive: (
         id: Int,
         title: String,
@@ -93,19 +101,31 @@ fun AddDiveScreen(
         temperature: String,
         visibility: String,
         notes: String,
-        photos: List<String>
+        photos: List<String>,
+        latitude: Double?,
+        longitude: Double?
     ) -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onPickLocationClick: () -> Unit,
 ) {
-    var title by remember { mutableStateOf(diveToEdit?.title ?: "") }
-    var location by remember { mutableStateOf(diveToEdit?.location ?: "") }
-    var diveType by remember { mutableStateOf(diveToEdit?.diveType ?: "") }
-    var date by remember { mutableStateOf(diveToEdit?.date ?: "") }
-    var depth by remember { mutableStateOf(diveToEdit?.maxDepth?.replace(" m", "") ?: "") }
-    var duration by remember { mutableStateOf(diveToEdit?.duration?.replace(" min", "") ?: "") }
-    var temperature by remember { mutableStateOf(diveToEdit?.waterTemperature?.replace(" ºC", "") ?: "") }
-    var visibility by remember { mutableStateOf(diveToEdit?.visibility ?: "") }
-    var notes by remember { mutableStateOf(diveToEdit?.notes ?: "") }
+    var title by rememberSaveable { mutableStateOf(diveToEdit?.title ?: "") }
+    var location by rememberSaveable { mutableStateOf(diveToEdit?.location ?: "") }
+    var latitude by rememberSaveable { mutableStateOf(diveToEdit?.latitude) }
+    var longitude by rememberSaveable { mutableStateOf(diveToEdit?.longitude) }
+    LaunchedEffect(pickedLocation, pickedLatitude, pickedLongitude) {
+        if (!pickedLocation.isNullOrBlank()) {
+            location = pickedLocation
+            latitude = pickedLatitude
+            longitude = pickedLongitude
+        }
+    }
+    var diveType by rememberSaveable { mutableStateOf(diveToEdit?.diveType ?: "") }
+    var date by rememberSaveable { mutableStateOf(diveToEdit?.date ?: "") }
+    var depth by rememberSaveable { mutableStateOf(diveToEdit?.maxDepth?.replace(" m", "") ?: "") }
+    var duration by rememberSaveable { mutableStateOf(diveToEdit?.duration?.replace(" min", "") ?: "") }
+    var temperature by rememberSaveable { mutableStateOf(diveToEdit?.waterTemperature?.replace(" ºC", "") ?: "") }
+    var visibility by rememberSaveable { mutableStateOf(diveToEdit?.visibility ?: "") }
+    var notes by rememberSaveable { mutableStateOf(diveToEdit?.notes ?: "") }
 
     var selectedPhotos by remember {
         mutableStateOf<List<Uri>>(
@@ -271,9 +291,30 @@ fun AddDiveScreen(
                                     value = location,
                                     onValueChange = { location = it },
                                     label = "Lugar *",
-                                    placeholder = "Ej: Murcia, España",
-                                    isError = showError && location.isBlank()
+                                    placeholder = "Selecciona o escribe un lugar",
+                                    readOnly = false,
+                                    isError = showError && location.isBlank(),
+                                    trailingIcon = {
+                                        IconButton(
+                                            onClick = onPickLocationClick
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Place,
+                                                contentDescription = "Seleccionar ubicación en mapa",
+                                                tint = DiveFoam
+                                            )
+                                        }
+                                    }
                                 )
+
+                                if (latitude != null && longitude != null) {
+                                    DiveMiniMapCard(
+                                        latitude = latitude,
+                                        longitude = longitude,
+                                        locationName = location,
+                                        interactive = false
+                                    )
+                                }
 
                                 DiveDropdownField(
                                     value = diveType,
@@ -487,7 +528,9 @@ fun AddDiveScreen(
                                 if (temperature.isBlank()) "" else "$temperature ºC",
                                 visibility,
                                 notes,
-                                selectedPhotos.map { it.toString() }
+                                selectedPhotos.map { it.toString() },
+                                latitude,
+                                longitude
                             )
                         } else {
                             showError = true

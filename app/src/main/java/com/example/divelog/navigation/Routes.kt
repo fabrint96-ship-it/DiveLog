@@ -11,6 +11,8 @@ object Routes {
 
     const val AUTH_LOADING = "auth_loading"
 
+    const val LOCATION_PICKER = "location_picker"
+
     fun diveDetail(diveId: Int): String = "dive_detail/$diveId"
     fun editDive(diveId: Int): String = "edit_dive/$diveId"
 
